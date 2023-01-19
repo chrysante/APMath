@@ -1,10 +1,14 @@
 #include <cstdint>
 #include <cstddef>
+#include <climits>
 
 namespace APMath {
 
 /// Arbitraty precision integer.
 class APInt {
+public:
+    using Limb = std::uint64_t;
+    
 public:
     explicit APInt(std::size_t bitwidth);
     explicit APInt(std::uint64_t value, std::size_t bitwidth);
@@ -47,15 +51,42 @@ public:
     static constexpr std::size_t maxBitwidth() { return (std::size_t(1) << 31) - 1; }
     
 private:
-    using Limb = std::uint64_t;
     static constexpr std::size_t limbSize = sizeof(Limb);
+    static constexpr std::size_t limbBitSize = limbSize * CHAR_BIT;
+    
+    static std::size_t ceilDiv(std::size_t a, std::size_t b) {
+        return a / b + !!(a % b);
+    }
+    
+    static std::size_t ceilRem(std::size_t a, std::size_t b) {
+        std::size_t const result = a % b;
+        if (result == 0) {
+            return b;
+        }
+        return result;
+    }
+    
+    bool isLocal() const { return numLimbs() <= 1; }
+    
+    std::size_t numLimbs() const { return ceilDiv(_bitwidth, limbBitSize); }
+    
+    std::size_t byteSize() const { return numLimbs() * limbSize; }
+    
+    Limb topLimbMask() const { return topLimbActiveBits == 64 ? Limb(-1) : (Limb(1) << topLimbActiveBits) - 1; }
+    
+    Limb const* limbPtr() const { return isLocal() ? &singleLimb : limbs; }
+    Limb* limbPtr() { return const_cast<Limb*>(static_cast<APInt const*>(this)->limbPtr()); }
+    
+    Limb* allocate(std::size_t numLimbs);
+    void deallocate(Limb* ptr, std::size_t numLimbs);
+    
+private:
+    std::uint32_t _bitwidth;
+    std::uint32_t topLimbActiveBits;
     union {
         Limb singleLimb;
         Limb* limbs;
     };
-    bool isLocal            :  1;
-    std::uint32_t _bitwidth  : 31;
-    std::uint32_t _numLimbs;
 };
 
 } // namespace APMath
