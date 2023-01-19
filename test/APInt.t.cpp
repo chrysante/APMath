@@ -47,22 +47,28 @@ TEST_CASE("ucmp - 3") {
 
 TEST_CASE("add - 1") {
     APInt a(5, 64);
-    APInt const b(6, 64);
-    a.add(b);
-    CHECK(a.ucmp(11) == 0);
+    APInt b(6, 64);
+    SECTION("a + b") {
+        a.add(b);
+        CHECK(a.ucmp(11) == 0);
+    }
+    SECTION("b + a") {
+        b.add(a);
+        CHECK(b.ucmp(11) == 0);
+    }
 }
 
 TEST_CASE("add - overflow - 1") {
     APInt a({ 0xF000'0000'0000'0000, 1 }, 128);
     APInt b({ 0x1000'0000'0000'0000, 1 }, 128);
-    APInt const c({ 0, 3 }, 128);
+    APInt const ref({ 0, 3 }, 128);
     SECTION("a + b") {
         a.add(b);
-        CHECK(a.ucmp(c) == 0);
+        CHECK(a.ucmp(ref) == 0);
     }
     SECTION("b + a") {
         b.add(a);
-        CHECK(b.ucmp(c) == 0);
+        CHECK(b.ucmp(ref) == 0);
     }
 }
 
@@ -74,3 +80,40 @@ TEST_CASE("add - overflow - 2") {
     CHECK(a.ucmp(c) == 0);
 }
 
+TEST_CASE("sub - 1") {
+    APInt a(6, 64);
+    APInt b(5, 64);
+    SECTION("a - b") {
+        a.sub(b);
+        CHECK(a.ucmp(1) == 0);
+    }
+    SECTION("b - a") {
+        b.sub(a);
+        CHECK(b.ucmp(0xFFFF'FFFF'FFFF'FFFF) == 0);
+    }
+}
+
+TEST_CASE("sub - 2") {
+    APInt a({ 3, 2 }, 128);
+    APInt b({ 5, 1 }, 128);
+    APInt const ref({ APInt::Limb(-2), 0 }, 128);
+    a.sub(b);
+    CHECK(a.ucmp(ref) == 0);
+}
+
+TEST_CASE("sub - 3") {
+    APInt a({ 5, 2 }, 128);
+    APInt b({ 3, 1 }, 128);
+    APInt const ref({ 2, 1 }, 128);
+    a.sub(b);
+    CHECK(a.ucmp(ref) == 0);
+}
+
+TEST_CASE("sub - underflow - 1") {
+    auto const bWidth = GENERATE(1, 64, 192);
+    APInt       a(0, 192);
+    APInt const b(1, bWidth);
+    APInt const c({ 0xFFFF'FFFF'FFFF'FFFF, 0xFFFF'FFFF'FFFF'FFFF, 0xFFFF'FFFF'FFFF'FFFF }, 192);
+    a.sub(b);
+    CHECK(a.ucmp(c) == 0);
+}

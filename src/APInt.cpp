@@ -155,7 +155,20 @@ APInt& APInt::add(APInt const& rhs) {
 }
 
 APInt& APInt::sub(APInt const& rhs) {
-    
+    Limb carry = 0;
+    Limb* l = limbPtr();
+    Limb const* r = rhs.limbPtr();
+    size_t const count = std::min(numLimbs(), rhs.numLimbs());
+    for (size_t i = 0; i < count; ++i) {
+        Limb const newCarry = l[i] < r[i] || l[i] < r[i] + carry;
+        l[i] -= r[i] + carry;
+        carry = newCarry;
+    }
+    for (size_t i = count; carry != 0 && i < numLimbs(); ++i) {
+        carry = l[i] == 0;
+        l[i] -= 1;
+    }
+    l[numLimbs() - 1] &= topLimbMask();
     return *this;
 }
 
@@ -286,15 +299,8 @@ int APInt::ucmp(uint64_t rhs) const {
     return ucmpImpl(limbPtr(), numLimbs(), &rhs, 1);
 }
 
-#include <sstream>
-
 std::string APInt::toString(int base) const {
-    // Hacky implementation for now only working for base 2
-    assert(base == 2 && false);
-//    std::stringstream sstr;
-//    for (size_t i = numLimbs(); i > 0; --i) {
-//        sstr <<
-//    }
+    assert(false);
 }
 
 APInt::Limb* APInt::allocate(size_t numLimbs) {
