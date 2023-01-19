@@ -24,6 +24,8 @@ public:
     APInt& operator=(APInt&& rhs) noexcept;
     ~APInt();
     
+    void swap(APInt& rhs) noexcept;
+    
     APInt& add(APInt const& rhs);
     APInt& sub(APInt const& rhs);
     APInt& mul(APInt const& rhs);

@@ -117,3 +117,77 @@ TEST_CASE("sub - underflow - 1") {
     a.sub(b);
     CHECK(a.ucmp(c) == 0);
 }
+
+TEST_CASE("mul - 1") {
+    APInt a(5, 64);
+    APInt b(6, 64);
+    SECTION("a * b") {
+        a.mul(b);
+        CHECK(a.ucmp(30) == 0);
+    }
+    SECTION("b * a") {
+        b.mul(a);
+        CHECK(b.ucmp(30) == 0);
+    }
+}
+
+TEST_CASE("mul - 2") {
+    APInt a(0x8000'0000'0000'0000, 128);
+    APInt b(3, 128);
+    APInt ref({ 0x8000'0000'0000'0000, 1 }, 128);
+    SECTION("a * b") {
+        a.mul(b);
+        CHECK(a.ucmp(ref) == 0);
+    }
+    SECTION("b * a") {
+        b.mul(a);
+        CHECK(b.ucmp(ref) == 0);
+    }
+}
+
+TEST_CASE("mul - 3") {
+    APInt a(-1, 64);
+    APInt b(-1, 64);
+    APInt ref(uint64_t(-1) * uint64_t(-1), 64);
+    a.mul(b);
+    CHECK(a.ucmp(ref) == 0);
+}
+
+TEST_CASE("mul - 4") {
+    APInt a(-4, 64);
+    APInt b(7, 64);
+    APInt ref(uint64_t(-28), 64);
+    a.mul(b);
+    CHECK(a.ucmp(ref) == 0);
+}
+
+TEST_CASE("lshl - 1") {
+    APInt a(6, 64);
+    a.lshl(1);
+    CHECK(a.ucmp(12) == 0);
+    a.lshl(1);
+    CHECK(a.ucmp(24) == 0);
+    a.lshl(2);
+    CHECK(a.ucmp(96) == 0);
+}
+
+TEST_CASE("lshl - 2") {
+    APInt a(0xACAB'DEAD'BEEF'ACAB, 128);
+    a.lshl(32);
+    APInt const ref({ 0xBEEF'ACAB'0000'0000, 0xACAB'DEAD }, 128);
+    CHECK(a.ucmp(ref) == 0);
+}
+
+TEST_CASE("lshl - 3") {
+    APInt a({ 1, 0 }, 128);
+    a.lshl(64);
+    APInt const ref({ 0, 1 }, 128);
+    CHECK(a.ucmp(ref) == 0);
+}
+
+TEST_CASE("lshl - 4") {
+    APInt a({ 0xDEAD'BEEF, 0, 0, 0 }, 200);
+    a.lshl(132);
+    APInt const ref({ 0, 0, 0xDEAD'BEEF'0, 0 }, 200);
+    CHECK(a.ucmp(ref) == 0);
+}

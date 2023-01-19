@@ -3,9 +3,10 @@
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
-#include <utility>
 #include <algorithm>
+#include <array>
 #include <tuple>
+#include <utility>
 
 using namespace APMath;
 
@@ -136,6 +137,16 @@ APInt::~APInt() {
     deallocate(limbs, numLimbs());
 }
 
+void APInt::swap(APInt& rhs) noexcept {
+    std::swap(_bitwidth, rhs._bitwidth);
+    std::swap(topLimbActiveBits, rhs.topLimbActiveBits);
+    /// Use memcpy to swap to avoid reading inactive union member.
+    Limb tmp;
+    std::memcpy(&tmp, &singleLimb, limbSize);
+    std::memcpy(&singleLimb, &rhs.singleLimb, limbSize);
+    std::memcpy(&rhs.singleLimb, &tmp, limbSize);
+}
+
 APInt& APInt::add(APInt const& rhs) {
     Limb carry = 0;
     Limb* l = limbPtr();
@@ -172,8 +183,44 @@ APInt& APInt::sub(APInt const& rhs) {
     return *this;
 }
 
+static APInt::Limb mulCarry(APInt::Limb a, APInt::Limb b) {
+    static_assert(sizeof(APInt::Limb) == 8, "Only works for 64 bit integers");
+    constexpr uint64_t mask = 0xFFFF'FFFF;
+    uint64_t const a0 = a & mask;
+    uint64_t const a1 = a >> 32;
+    uint64_t const b0 = b & mask;
+    uint64_t const b1 = b >> 32;
+    uint64_t const d0 = a1 * b0 + (a0 * b0 >> 32);
+    uint64_t const d1 = a0 * b1;
+    uint64_t const c1 = d0 + d1;
+    uint64_t const c2 = (c1 >> 32) + (c1 < d0 ? 0x100000000u : 0);
+    uint64_t const carry = a1 * b1 + c2;
+    return carry;
+}
+
 APInt& APInt::mul(APInt const& rhs) {
-    
+    assert(bitwidth() == rhs.bitwidth());
+    APInt lhs(bitwidth());
+    swap(lhs);
+    Limb const* l = lhs.limbPtr();
+    Limb const* r = rhs.limbPtr();
+    APInt term(bitwidth());
+    Limb* t = term.limbPtr();
+    for (size_t j = numLimbs(); j > 0; ) {
+        std::memset(t, 0, byteSize());
+        --j;
+        Limb const factor = r[j];
+        Limb carry = 0;
+        for (size_t i = 0, k = j; k < numLimbs(); ++i, ++k) {
+            Limb newCarry = mulCarry(l[i], factor);
+            assert(newCarry != limbMax);
+            t[k] = l[i] * factor;
+            newCarry += t[k] > limbMax - carry;
+            t[k] += carry;
+            carry = newCarry;
+        }
+        this->add(term);
+    }
     return *this;
 }
 
@@ -218,8 +265,35 @@ APInt& APInt::btwnot() {
 }
 
 APInt& APInt::lshl(int numBits) {
-    
-    return *this;
+    assert(numBits < _bitwidth);
+    size_t const bitOffset = numBits % limbBitSize;
+    size_t const limbOffset = numBits / limbBitSize;
+    Limb* l = limbPtr();
+    if (numBits < limbBitSize) {
+        Limb carry = 0;
+        size_t const rightShiftAmount = limbBitSize - bitOffset;
+        for (size_t i = 0; i < numLimbs(); ++i) {
+            Limb const newCarry = rightShiftAmount == limbBitSize ? 0 : l[i] >> rightShiftAmount;
+            l[i] <<= bitOffset;
+            l[i] |= carry;
+            carry = newCarry;
+        }
+        return *this;
+    }
+    else {
+        size_t i = numLimbs() - limbOffset;
+        size_t j = numLimbs();
+        while (i > 0) {
+            --i;
+            --j;
+            l[j] = l[i];
+        }
+        while (j > 0) {
+            --j;
+            l[j] = 0;
+        }
+        return lshl(static_cast<int>(bitOffset));
+    }
 }
 
 APInt& APInt::lshr(int numBits) {
