@@ -9,11 +9,17 @@
 
 using namespace APMath;
 
-APInt::APInt(std::size_t bitwidth): APInt(0, bitwidth) {}
+using std::size_t;
+using std::uint8_t;
+using std::uint16_t;
+using std::uint32_t;
+using std::uint64_t;
 
-APInt::APInt(std::uint64_t value, std::size_t bw):
-    _bitwidth(static_cast<std::uint32_t>(bw)),
-    topLimbActiveBits(static_cast<std::uint32_t>(ceilRem(bitwidth(), limbSize * CHAR_BIT)))
+APInt::APInt(size_t bitwidth): APInt(0, bitwidth) {}
+
+APInt::APInt(uint64_t value, size_t bw):
+    _bitwidth(static_cast<uint32_t>(bw)),
+    topLimbActiveBits(static_cast<uint32_t>(ceilRem(bitwidth(), limbSize * CHAR_BIT)))
 {
     assert(bw <= maxBitwidth());
     if (isLocal()) {
@@ -24,6 +30,12 @@ APInt::APInt(std::uint64_t value, std::size_t bw):
         std::memset(limbs, 0, byteSize());
         limbs[0] = value;
     }
+}
+
+APInt::APInt(std::span<Limb const> limbs, size_t bitwidth): APInt(bitwidth) {
+    auto* const lp = limbPtr();
+    std::copy_n(limbs.begin(), std::min(limbs.size(), numLimbs()), lp);
+    lp[numLimbs() - 1] &= topLimbMask();
 }
 
 APInt::APInt(APInt const& rhs):
@@ -56,7 +68,7 @@ APInt::APInt(APInt&& rhs) noexcept:
 
 APInt& APInt::operator=(APInt const& rhs) {
     bool thisIsLocal = isLocal();
-    std::size_t thisNumLimbs = numLimbs();
+    size_t thisNumLimbs = numLimbs();
     _bitwidth = rhs._bitwidth;
     topLimbActiveBits = rhs.topLimbActiveBits;
     if (thisIsLocal) {
@@ -87,7 +99,7 @@ APInt& APInt::operator=(APInt const& rhs) {
 
 APInt& APInt::operator=(APInt&& rhs) noexcept {
     bool thisIsLocal = isLocal();
-    std::size_t thisNumLimbs = numLimbs();
+    size_t thisNumLimbs = numLimbs();
     _bitwidth = rhs._bitwidth;
     topLimbActiveBits = rhs.topLimbActiveBits;
     if (thisIsLocal) {
@@ -125,7 +137,20 @@ APInt::~APInt() {
 }
 
 APInt& APInt::add(APInt const& rhs) {
-    
+    Limb carry = 0;
+    Limb* l = limbPtr();
+    Limb const* r = rhs.limbPtr();
+    size_t const count = std::min(numLimbs(), rhs.numLimbs());
+    for (size_t i = 0; i < count; ++i) {
+        Limb const newCarry = l[i] > limbMax - r[i] || l[i] > limbMax - (r[i] + carry);
+        l[i] += r[i] + carry;
+        carry = newCarry;
+    }
+    for (size_t i = count; carry != 0 && i < numLimbs(); ++i) {
+        carry = l[i] == limbMax;
+        l[i] += 1;
+    }
+    l[numLimbs() - 1] &= topLimbMask();
     return *this;
 }
 
@@ -220,11 +245,11 @@ int APInt::scmp(std::int64_t rhs) const {
 }
 
 static int ucmpLimb(APInt::Limb const* lhs, APInt::Limb const* rhs) {
-    constexpr std::size_t limbSize = sizeof(APInt::Limb);
+    constexpr size_t limbSize = sizeof(APInt::Limb);
     /// Only little endian implementation.
-    std::uint8_t const* l = reinterpret_cast<std::uint8_t const*>(lhs);
-    std::uint8_t const* r = reinterpret_cast<std::uint8_t const*>(rhs);
-    for (std::size_t i = 0; i < limbSize; ++i) {
+    uint8_t const* l = reinterpret_cast<uint8_t const*>(lhs);
+    uint8_t const* r = reinterpret_cast<uint8_t const*>(rhs);
+    for (size_t i = 0; i < limbSize; ++i) {
         auto const diff = static_cast<int>(l[i]) - static_cast<int>(r[i]);
         if (diff != 0) {
             return diff;
@@ -233,13 +258,13 @@ static int ucmpLimb(APInt::Limb const* lhs, APInt::Limb const* rhs) {
     return 0;
 }
 
-static int ucmpImpl(APInt::Limb const* lhs, std::size_t lhsNumLimbs, APInt::Limb const* rhs, std::size_t rhsNumLimbs) {
+static int ucmpImpl(APInt::Limb const* lhs, size_t lhsNumLimbs, APInt::Limb const* rhs, size_t rhsNumLimbs) {
     if (lhsNumLimbs != rhsNumLimbs) {
         /// A one is bigger than the other, we need to test the top limbs if they are != 0
         auto const [bigPtr, bigSize, smallPtr, smallSize] = lhsNumLimbs > rhsNumLimbs ?
             std::tuple{ lhs, lhsNumLimbs, rhs, rhsNumLimbs } :
             std::tuple{ rhs, rhsNumLimbs, lhs, lhsNumLimbs };
-        for (std::size_t i = smallSize; i != bigSize; ++i) {
+        for (size_t i = smallSize; i != bigSize; ++i) {
             if (bigPtr[i] != 0) {
                 return bigPtr == lhs ? 1 : -1;
             }
@@ -257,14 +282,25 @@ int APInt::ucmp(APInt const& rhs) const {
     return ucmpImpl(limbPtr(), numLimbs(), rhs.limbPtr(), rhs.numLimbs());
 }
 
-int APInt::ucmp(std::uint64_t rhs) const {
+int APInt::ucmp(uint64_t rhs) const {
     return ucmpImpl(limbPtr(), numLimbs(), &rhs, 1);
 }
 
-APInt::Limb* APInt::allocate(std::size_t numLimbs) {
+#include <sstream>
+
+std::string APInt::toString(int base) const {
+    // Hacky implementation for now only working for base 2
+    assert(base == 2 && false);
+//    std::stringstream sstr;
+//    for (size_t i = numLimbs(); i > 0; --i) {
+//        sstr <<
+//    }
+}
+
+APInt::Limb* APInt::allocate(size_t numLimbs) {
     return static_cast<Limb*>(std::malloc(numLimbs * limbSize));
 }
 
-void APInt::deallocate(Limb* ptr, std::size_t numLimbs) {
+void APInt::deallocate(Limb* ptr, size_t numLimbs) {
     std::free(ptr);
 }

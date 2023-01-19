@@ -1,6 +1,9 @@
 #include <cstdint>
 #include <cstddef>
 #include <climits>
+#include <initializer_list>
+#include <span>
+#include <string>
 
 namespace APMath {
 
@@ -12,6 +15,9 @@ public:
 public:
     explicit APInt(std::size_t bitwidth);
     explicit APInt(std::uint64_t value, std::size_t bitwidth);
+    explicit APInt(std::initializer_list<Limb> limbs, std::size_t bitwidth):
+        APInt(std::span<Limb const>(limbs), bitwidth) {}
+    explicit APInt(std::span<Limb const> limbs, std::size_t bitwidth);
     APInt(APInt const& rhs);
     APInt(APInt&& rhs) noexcept;
     APInt& operator=(APInt const& rhs);
@@ -50,9 +56,12 @@ public:
     
     static constexpr std::size_t maxBitwidth() { return (std::size_t(1) << 31) - 1; }
     
+    std::string toString(int base = 10) const;
+    
 private:
     static constexpr std::size_t limbSize = sizeof(Limb);
     static constexpr std::size_t limbBitSize = limbSize * CHAR_BIT;
+    static constexpr Limb limbMax = Limb(-1);
     
     static std::size_t ceilDiv(std::size_t a, std::size_t b) {
         return a / b + !!(a % b);
