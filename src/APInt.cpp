@@ -4,29 +4,33 @@
 
 using namespace APMath;
 
-APInt::APInt(std::size_t bitwidth) {
+static std::size_t ceilDiv(std::size_t a, std::size_t b) {
+    return a / b + !!(a % b);
+}
+
+APInt::APInt(std::size_t bitwidth): APInt(0, bitwidth) {}
+
+APInt::APInt(std::uint64_t value, std::size_t bitwidth) {
     assert(bitwidth <= maxBitwidth());
     _bitwidth = static_cast<uint32_t>(bitwidth);
+    _numLimbs = _bitwidth / limbSize;
+    isLocal = _numLimbs == 1;
 }
 
-APInt::APInt(std::uint64_t value, std::size_t precision) {
+APInt::APInt(APInt const& rhs) {
     
 }
 
-APInt::APInt(APInt const&) {
+APInt::APInt(APInt&& rhs) noexcept {
     
 }
 
-APInt::APInt(APInt&&) noexcept {
-    
-}
-
-APInt& APInt::operator=(APInt const&) {
+APInt& APInt::operator=(APInt const& rhs) {
     
     return *this;
 }
 
-APInt& APInt::operator=(APInt&&) noexcept {
+APInt& APInt::operator=(APInt&& rhs) noexcept {
     
     return *this;
 }
@@ -122,16 +126,20 @@ APInt& APInt::rotr(int numBits) {
 
 int APInt::scmp(APInt const& rhs) const {
     
+    return 0;
 }
 
 int APInt::scmp(std::int64_t rhs) const {
     
+    return 0;
 }
 
 int APInt::ucmp(APInt const& rhs) const {
     
+    return 0;
 }
 
 int APInt::ucmp(std::uint64_t rhs) const {
     
+    return 0;
 }

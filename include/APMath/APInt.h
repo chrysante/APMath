@@ -6,12 +6,12 @@ namespace APMath {
 /// Arbitraty precision integer.
 class APInt {
 public:
-    explicit APInt(std::size_t precision);
-    explicit APInt(std::uint64_t value, std::size_t precision);
-    APInt(APInt const&);
-    APInt(APInt&&) noexcept;
-    APInt& operator=(APInt const&);
-    APInt& operator=(APInt&&) noexcept;
+    explicit APInt(std::size_t bitwidth);
+    explicit APInt(std::uint64_t value, std::size_t bitwidth);
+    APInt(APInt const& rhs);
+    APInt(APInt&& rhs) noexcept;
+    APInt& operator=(APInt const& rhs);
+    APInt& operator=(APInt&& rhs) noexcept;
     ~APInt();
     
     APInt& add(APInt const& rhs);
@@ -47,9 +47,11 @@ public:
     static constexpr std::size_t maxBitwidth() { return (std::size_t(1) << 31) - 1; }
     
 private:
+    using Limb = std::uint64_t;
+    static constexpr std::size_t limbSize = sizeof(Limb);
     union {
-        std::uint64_t singleLimb;
-        std::uint64_t* limbs;
+        Limb singleLimb;
+        Limb* limbs;
     };
     bool isLocal            :  1;
     std::uint32_t _bitwidth  : 31;
