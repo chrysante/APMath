@@ -224,14 +224,54 @@ APInt& APInt::mul(APInt const& rhs) {
     return *this;
 }
 
+std::pair<APInt, APInt> APMath::udivmod(APInt const& numerator, APInt const& denominator) {
+    using Limb = APInt::Limb;
+    constexpr size_t limbBitSize = sizeof(Limb) * CHAR_BIT;
+    assert(numerator.bitwidth() == denominator.bitwidth());
+    assert(denominator.ucmp(0) != 0);
+    APInt quotient(0, numerator.bitwidth());
+    APInt remainder(0, numerator.bitwidth());
+    Limb* const q = quotient.limbPtr();
+    Limb* const r = remainder.limbPtr();
+    Limb const* const n = numerator.limbPtr();
+    for (size_t i = numerator.bitwidth(); i > 0;) {
+        --i;
+        remainder.lshl(1);
+        r[0] |= (n[i / limbBitSize] >> (i % limbBitSize)) & Limb(1);
+        if (remainder.ucmp(denominator) >= 0) {
+            remainder.sub(denominator);
+            q[i / limbBitSize] |= Limb(1) << (i % limbBitSize);
+        }
+    }
+    return { std::move(quotient), std::move(remainder) };
+}
+
+std::pair<APInt, APInt> APMath::sdivmod(APInt const& numerator, APInt const& denominator) {
+//    if (denominator.scmp(0) < 0) {
+//        auto result = sdivmod(numerator, -denominator)
+//    } then (Q, R) := divide(N, −D); return (−Q, R) end
+//    
+}
+
+//function divide(N, D)
+//  if D = 0 then error(DivisionByZero) end
+//  if D < 0 then (Q, R) := divide(N, −D); return (−Q, R) end
+//  if N < 0 then
+//    (Q,R) := divide(−N, D)
+//    if R = 0 then return (−Q, 0)
+//    else return (−Q − 1, D − R) end
+//  end
+//  -- At this point, N ≥ 0 and D > 0
+//  return divide_unsigned(N, D)
+//end
+
 APInt& APInt::sdiv(APInt const& rhs) {
     
     return *this;
 }
 
 APInt& APInt::udiv(APInt const& rhs) {
-    
-    return *this;
+    return *this = udivmod(*this, rhs).first;
 }
 
 APInt& APInt::srem(APInt const& rhs) {
@@ -240,8 +280,7 @@ APInt& APInt::srem(APInt const& rhs) {
 }
 
 APInt& APInt::urem(APInt const& rhs) {
-    
-    return *this;
+    return *this = udivmod(*this, rhs).second;
 }
 
 APInt& APInt::btwand(APInt const& rhs) {
@@ -361,32 +400,20 @@ APInt& APInt::rotr(int numBits) {
 }
 
 int APInt::scmp(APInt const& rhs) const {
-    
-    return 0;
-}
-
-int APInt::scmp(std::int64_t rhs) const {
-    
-    return 0;
-}
-
-static int ucmpLimb(APInt::Limb const* lhs, APInt::Limb const* rhs) {
-    constexpr size_t limbSize = sizeof(APInt::Limb);
-    /// Only little endian implementation.
-    uint8_t const* l = reinterpret_cast<uint8_t const*>(lhs);
-    uint8_t const* r = reinterpret_cast<uint8_t const*>(rhs);
-    for (size_t i = 0; i < limbSize; ++i) {
-        auto const diff = static_cast<int>(l[i]) - static_cast<int>(r[i]);
-        if (diff != 0) {
-            return diff;
-        }
+    assert(bitwidth() == rhs.bitwidth());
+    int const l = static_cast<int>(limbPtr()[numLimbs() - 1] >> (topLimbActiveBits - 1));
+    int const r = static_cast<int>(rhs.limbPtr()[numLimbs() - 1] >> (topLimbActiveBits - 1));
+    if (l == r) {
+        return ucmp(rhs);
     }
-    return 0;
+    else {
+        return r - l;
+    }
 }
 
 static int ucmpImpl(APInt::Limb const* lhs, size_t lhsNumLimbs, APInt::Limb const* rhs, size_t rhsNumLimbs) {
     if (lhsNumLimbs != rhsNumLimbs) {
-        /// A one is bigger than the other, we need to test the top limbs if they are != 0
+        /// A one is bigger than the other, we need to test the top limbs separately.
         auto const [bigPtr, bigSize, smallPtr, smallSize] = lhsNumLimbs > rhsNumLimbs ?
             std::tuple{ lhs, lhsNumLimbs, rhs, rhsNumLimbs } :
             std::tuple{ rhs, rhsNumLimbs, lhs, lhsNumLimbs };
@@ -396,10 +423,15 @@ static int ucmpImpl(APInt::Limb const* lhs, size_t lhsNumLimbs, APInt::Limb cons
             }
         }
     }
-    for (auto* end = lhs + std::min(lhsNumLimbs, rhsNumLimbs); lhs != end; ++lhs, ++rhs) {
-        if (auto const diff = ucmpLimb(lhs, rhs); diff != 0) {
-            return diff;
+    for (size_t i = std::min(lhsNumLimbs, rhsNumLimbs); i > 0;) {
+        --i;
+        if (lhs[i] == rhs[i]) {
+            continue;
         }
+        if (lhs[i] < rhs[i]) {
+            return -1;
+        }
+        return 1;
     }
     return 0;
 }

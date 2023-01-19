@@ -45,6 +45,29 @@ TEST_CASE("ucmp - 3") {
     CHECK(c.ucmp(d) < 0);
 }
 
+TEST_CASE("scmp - 1") {
+    auto const aVal = GENERATE(-100, -1, 0, 10, 100);
+    auto const bVal = GENERATE(-100, -1, 0, 10, 100);
+    auto const bitwidth = GENERATE(8, 63, 64, 65);
+    APInt const a({ uint64_t(aVal), aVal >= 0 ? 0ull : -1ull }, bitwidth);
+    APInt const b({ uint64_t(bVal), bVal >= 0 ? 0ull : -1ull }, bitwidth);
+    if (aVal == bVal) {
+        CHECK(a.scmp(b) == 0);
+    }
+    else if (aVal > bVal) {
+        CHECK(a.scmp(b) > 0);
+    }
+    else {
+        CHECK(a.scmp(b) < 0);
+    }
+}
+
+TEST_CASE("ucmp - 4") {
+    APInt const a(195, 64);
+    APInt const b(99999, 64);
+    CHECK(a.ucmp(b) < 0);
+}
+
 TEST_CASE("add - 1") {
     APInt a(5, 64);
     APInt b(6, 64);
@@ -159,6 +182,19 @@ TEST_CASE("mul - 4") {
     APInt ref(uint64_t(-28), 64);
     a.mul(b);
     CHECK(a.ucmp(ref) == 0);
+}
+
+TEST_CASE("udiv - 1") {
+    size_t const aVal = GENERATE(0, 1, 7, 10, 100, 99999, 0xFFFF'FFFF'FFFF'FFFFull);
+    size_t const bVal = GENERATE(1, 2, 7, 99999, 0xFFFF'FFFF'FFFF'FFFFull);
+    auto const bitwidth = GENERATE(64, 65, 127, 128);
+    APInt a(aVal, bitwidth);
+    APInt b(bVal, bitwidth);
+    auto const [q, r] = udivmod(a, b);
+    INFO("a = " << aVal << "\nb = " << bVal << "\nbitwidth = " << bitwidth <<
+         "\na / b = " << aVal / bVal << "\na % b = " << aVal % bVal);
+    CHECK(q.ucmp(aVal / bVal) == 0);
+    CHECK(r.ucmp(aVal % bVal) == 0);
 }
 
 TEST_CASE("lshl - 1") {

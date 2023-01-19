@@ -4,8 +4,14 @@
 #include <initializer_list>
 #include <span>
 #include <string>
+#include <utility>
 
 namespace APMath {
+
+class APInt;
+
+std::pair<APInt, APInt> udivmod(APInt const& numerator, APInt const& divisor);
+std::pair<APInt, APInt> sdivmod(APInt const& numerator, APInt const& divisor);
 
 /// Arbitraty precision integer.
 class APInt {
@@ -50,7 +56,6 @@ public:
     APInt& rotr(int numBits);
     
     int scmp(APInt const& rhs) const;
-    int scmp(std::int64_t rhs) const;
     int ucmp(APInt const& rhs) const;
     int ucmp(std::uint64_t rhs) const;
     
@@ -59,6 +64,9 @@ public:
     static constexpr std::size_t maxBitwidth() { return (std::size_t(1) << 31) - 1; }
     
     std::string toString(int base = 10) const;
+    
+    friend std::pair<APInt, APInt> udivmod(APInt const& numerator, APInt const& divisor);
+    friend std::pair<APInt, APInt> sdivmod(APInt const& numerator, APInt const& divisor);
     
 private:
     static constexpr std::size_t limbSize = sizeof(Limb);
