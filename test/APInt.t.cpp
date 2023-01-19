@@ -191,3 +191,34 @@ TEST_CASE("lshl - 4") {
     APInt const ref({ 0, 0, 0xDEAD'BEEF'0, 0 }, 200);
     CHECK(a.ucmp(ref) == 0);
 }
+
+TEST_CASE("lshr - 1") {
+    APInt a(72, 64);
+    a.lshr(1);
+    CHECK(a.ucmp(36) == 0);
+    a.lshr(1);
+    CHECK(a.ucmp(18) == 0);
+    a.lshr(2);
+    CHECK(a.ucmp(4) == 0);
+}
+
+TEST_CASE("lshr - 2") {
+    APInt a(0xACAB'DEAD'BEEF'ACAB, 128);
+    a.lshr(32);
+    APInt const ref(0xACAB'DEAD, 128);
+    CHECK(a.ucmp(ref) == 0);
+}
+
+TEST_CASE("lshr - 3") {
+    APInt a({ 0, 1 }, 128);
+    a.lshr(64);
+    APInt const ref({ 1, 0 }, 128);
+    CHECK(a.ucmp(ref) == 0);
+}
+
+TEST_CASE("lshr - 4") {
+    APInt a({ 0, 0, 0xDEAD'BEEF, 0 }, 200);
+    a.lshr(132);
+    APInt const ref({ 0xDEAD'BEE, 0, 0, 0 }, 200);
+    CHECK(a.ucmp(ref) == 0);
+}

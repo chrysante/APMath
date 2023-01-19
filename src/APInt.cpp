@@ -264,21 +264,27 @@ APInt& APInt::btwnot() {
     return *this;
 }
 
+static void lshlShort(APInt::Limb* l, size_t numLimbs, size_t bitOffset) {
+    using Limb = APInt::Limb;
+    constexpr size_t limbBitSize = sizeof(Limb) * CHAR_BIT;
+    assert(bitOffset < limbBitSize);
+    Limb carry = 0;
+    size_t const rightShiftAmount = limbBitSize - bitOffset;
+    for (size_t i = 0; i < numLimbs; ++i) {
+        Limb const newCarry = rightShiftAmount == limbBitSize ? 0 : l[i] >> rightShiftAmount;
+        l[i] <<= bitOffset;
+        l[i] |= carry;
+        carry = newCarry;
+    }
+}
+
 APInt& APInt::lshl(int numBits) {
     assert(numBits < _bitwidth);
     size_t const bitOffset = numBits % limbBitSize;
     size_t const limbOffset = numBits / limbBitSize;
     Limb* l = limbPtr();
     if (numBits < limbBitSize) {
-        Limb carry = 0;
-        size_t const rightShiftAmount = limbBitSize - bitOffset;
-        for (size_t i = 0; i < numLimbs(); ++i) {
-            Limb const newCarry = rightShiftAmount == limbBitSize ? 0 : l[i] >> rightShiftAmount;
-            l[i] <<= bitOffset;
-            l[i] |= carry;
-            carry = newCarry;
-        }
-        return *this;
+        lshlShort(l, numLimbs(), bitOffset);
     }
     else {
         size_t i = numLimbs() - limbOffset;
@@ -292,12 +298,45 @@ APInt& APInt::lshl(int numBits) {
             --j;
             l[j] = 0;
         }
-        return lshl(static_cast<int>(bitOffset));
+        lshlShort(l + limbOffset, numLimbs() - limbOffset, bitOffset);
+    }
+    return *this;
+}
+
+static void lshrShort(APInt::Limb* l, size_t numLimbs, size_t bitOffset) {
+    using Limb = APInt::Limb;
+    constexpr size_t limbBitSize = sizeof(Limb) * CHAR_BIT;
+    assert(bitOffset < limbBitSize);
+    Limb carry = 0;
+    size_t const leftShiftAmount = limbBitSize - bitOffset;
+    for (size_t i = numLimbs; i > 0;) {
+        --i;
+        Limb const newCarry = leftShiftAmount == limbBitSize ? 0 : l[i] << leftShiftAmount;
+        l[i] >>= bitOffset;
+        l[i] |= carry;
+        carry = newCarry;
     }
 }
 
 APInt& APInt::lshr(int numBits) {
-    
+    assert(numBits < _bitwidth);
+    size_t const bitOffset = numBits % limbBitSize;
+    size_t const limbOffset = numBits / limbBitSize;
+    Limb* l = limbPtr();
+    if (numBits < limbBitSize) {
+        lshrShort(l, numLimbs(), bitOffset);
+    }
+    else {
+        size_t i = limbOffset;
+        size_t j = 0;
+        for (; i < numLimbs(); ++i, ++j) {
+            l[j] = l[i];
+        }
+        for (; j < numLimbs(); ++j) {
+            l[j] = 0;
+        }
+        lshrShort(l, numLimbs() - limbOffset, bitOffset);
+    }
     return *this;
 }
 
