@@ -7,6 +7,7 @@
 #include <array>
 #include <tuple>
 #include <utility>
+#include <vector>
 
 using namespace APMath;
 using namespace APMath::internal;
@@ -159,6 +160,30 @@ APInt APMath::btwnot(APInt operand) {
     return operand.btwnot();
 }
 
+APInt APMath::zext(APInt operand, std::size_t bitwidth) {
+    return operand.zext(bitwidth);
+}
+
+APInt APMath::sext(APInt operand, std::size_t bitwidth) {
+    return operand.sext(bitwidth);
+}
+
+int APMath::ucmp(APInt const& lhs, APInt const& rhs) {
+    return lhs.ucmp(rhs);
+}
+
+int APMath::ucmp(APInt const& lhs, std::uint64_t rhs) {
+    return lhs.ucmp(rhs);
+}
+
+int APMath::ucmp(std::uint64_t lhs, APInt const& rhs) {
+    return -rhs.ucmp(lhs);
+}
+
+int APMath::scmp(APInt const& lhs, APInt const& rhs) {
+    return lhs.scmp(rhs);
+}
+
 APInt::APInt(size_t bitwidth): APInt(0, bitwidth) {}
 
 APInt::APInt(uint64_t value, size_t bw):
@@ -291,18 +316,14 @@ void APInt::swap(APInt& rhs) noexcept {
 }
 
 APInt& APInt::add(APInt const& rhs) {
+    assert(bitwidth() == rhs.bitwidth());
     Limb carry = 0;
     Limb* l = limbPtr();
     Limb const* r = rhs.limbPtr();
-    size_t const count = std::min(numLimbs(), rhs.numLimbs());
-    for (size_t i = 0; i < count; ++i) {
+    for (size_t i = 0; i < numLimbs(); ++i) {
         Limb const newCarry = l[i] > limbMax - r[i] || l[i] > limbMax - (r[i] + carry);
         l[i] += r[i] + carry;
         carry = newCarry;
-    }
-    for (size_t i = count; carry != 0 && i < numLimbs(); ++i) {
-        carry = l[i] == limbMax;
-        l[i] += 1;
     }
     l[numLimbs() - 1] &= topLimbMask();
     return *this;
@@ -312,15 +333,10 @@ APInt& APInt::sub(APInt const& rhs) {
     Limb carry = 0;
     Limb* l = limbPtr();
     Limb const* r = rhs.limbPtr();
-    size_t const count = std::min(numLimbs(), rhs.numLimbs());
-    for (size_t i = 0; i < count; ++i) {
+    for (size_t i = 0; i < numLimbs(); ++i) {
         Limb const newCarry = l[i] < r[i] || l[i] < r[i] + carry;
         l[i] -= r[i] + carry;
         carry = newCarry;
-    }
-    for (size_t i = count; carry != 0 && i < numLimbs(); ++i) {
-        carry = l[i] == 0;
-        l[i] -= 1;
     }
     l[numLimbs() - 1] &= topLimbMask();
     return *this;
@@ -430,6 +446,7 @@ static void lshrShort(APInt::Limb* l, size_t numLimbs, size_t bitOffset) {
 }
 
 APInt& APInt::lshr(int numBits) {
+    assert(numBits >= 0);
     assert(numBits < _bitwidth);
     size_t const bitOffset = numBits % limbBitSize;
     size_t const limbOffset = numBits / limbBitSize;
@@ -452,12 +469,34 @@ APInt& APInt::lshr(int numBits) {
 }
 
 APInt& APInt::ashl(int numBits) {
-    assert(false);
-    return *this;
+    return lshl(numBits);
 }
 
-APInt& APInt::ashr(int numBits) {
-    assert(false);
+APInt& APInt::ashr(int nb) {
+    assert(nb >= 0);
+    size_t const numBits = static_cast<size_t>(nb);
+    assert(numBits < _bitwidth);
+    int const h = highbit();
+    lshr(nb);
+    if (h == 0) {
+        return *this;
+    }
+    Limb* const l = limbPtr();
+    size_t const loopEnd = ceilDiv(bitwidth() - numBits, limbBitSize);
+    for (size_t i = numLimbs(); i > loopEnd; ) {
+        --i;
+        l[i] = Limb(-1);
+    }
+    if (topLimbActiveBits < numBits) {
+        l[loopEnd - 1] |= Limb(-1) << (limbBitSize - (numBits - topLimbActiveBits));
+    }
+    else if (topLimbActiveBits == numBits) {
+        l[loopEnd - 1] |= Limb(-1);
+    }
+    else {
+        l[loopEnd - 1] |= Limb(-1) << (topLimbActiveBits - numBits);
+    }
+    l[numLimbs() - 1] &= topLimbMask();
     return *this;
 }
 
@@ -556,15 +595,141 @@ static int ucmpImpl(APInt::Limb const* lhs, size_t lhsNumLimbs, APInt::Limb cons
 }
 
 int APInt::ucmp(APInt const& rhs) const {
+    assert(bitwidth() == rhs.bitwidth());
     return ucmpImpl(limbPtr(), numLimbs(), rhs.limbPtr(), rhs.numLimbs());
 }
 
 int APInt::ucmp(uint64_t rhs) const {
+    if (numLimbs() == 1) {
+        rhs &= topLimbMask();
+    }
     return ucmpImpl(limbPtr(), numLimbs(), &rhs, 1);
 }
 
-std::string APInt::toString(int base) const {
-    assert(false);
+static char intToSymbol(Limb l) {
+    if (l < 10) {
+        return '0' + l;
+    }
+    return 'A' + l - 10;
+}
+
+std::string APInt::toString(int b) const& {
+    return APInt(*this).toString(b);
+}
+
+std::string APInt::toString(int b)&& {
+    assert(b >= 2);
+    assert(b <= 36);
+    std::string res;
+    APInt const base(b, bitwidth());
+    while (ucmp(0) != 0) {
+        auto [q, r] = udivrem(*this, base);
+        assert(r.ucmp(base) < 0);
+        res.push_back(intToSymbol(*r.limbPtr()));
+        *this = std::move(q);
+    }
+    std::reverse(res.begin(), res.end());
+    if (res.empty()) {
+        return "0";
+    }
+    return res;
+}
+
+std::string APInt::signedToString(int b) const {
+    bool const neg = negative();
+    if (!neg) {
+        return toString();
+    }
+    auto res = APMath::negate(*this).toString();
+    res.insert(res.begin(), '-');
+    return res;
+}
+
+static int charDigitToInt(char d) {
+    if (d >= '0' && d <= '9') {
+        return d - '0';
+    }
+    char const D = std::toupper(d);
+    return D - 'A' + 10;
+}
+
+static void div2(std::vector<char>& str, int base) {
+    int const halfBase = base / 2;
+    int nextAdditive = 0;
+    for (char& d: str) {
+        int const additive = nextAdditive;
+        nextAdditive = d % 2 ? halfBase : 0;
+        d = d / 2 + additive;
+    }
+    if (str.size() > 1 && str[0] == 0) {
+        str.erase(str.begin());
+    }
+}
+
+static int isDigit(char c, int base) {
+    assert(base >= 2);
+    assert(base <= 36);
+    if (c >= '0' && c <= std::min(+'9', '0' + base - 1)) {
+        return true;
+    }
+    if (base <= 10) {
+        return false;
+    }
+    if (c >= 'a' && c <= std::min(+'z', 'a' + base - 1)) {
+        return true;
+    }
+    if (c >= 'A' && c <= std::min(+'Z', 'A' + base - 1)) {
+        return true;
+    }
+    return false;
+}
+
+static int extractSign(std::string_view s, int base) {
+    for (char c: s) {
+        if (isDigit(c, base)) {
+            return 1;
+        }
+        if (c == '-') {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+std::optional<APInt> APInt::parse(std::string_view s, int base) {
+    assert(base >= 2);
+    assert(base <= 36);
+    int sign = extractSign(s, base);
+    if (sign == 0) {
+        return std::nullopt;
+    }
+    std::vector<char> str;
+    str.reserve(s.size());
+    for (auto c: s) {
+        if (isDigit(c, base)) {
+            str.push_back(charDigitToInt(c));
+        }
+    }
+    size_t bitwidth = 0;
+    APInt res(limbBitSize);
+    Limb* l = res.limbPtr();
+    while (str.size() > 1 || str[0] != 0) {
+        ++bitwidth;
+        if (bitwidth > res.bitwidth()) {
+            res.zext(2 * res.bitwidth());
+            l = res.limbPtr();
+        }
+        l[(bitwidth - 1) / limbBitSize] |= Limb(str.back() % 2) << ((bitwidth - 1) % limbBitSize);
+        div2(str, base);
+    }
+    if (res.ucmp(0) == 0) {
+        sign = 1;
+    }
+    res.zext(std::max(size_t(1), bitwidth + (sign == -1)));
+    if (sign == -1) {
+        res.negate();
+    }
+    return res;
 }
 
 APInt::Limb* APInt::allocate(size_t numLimbs) {
