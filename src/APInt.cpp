@@ -190,6 +190,7 @@ APInt::APInt(uint64_t value, size_t bw):
     _bitwidth(static_cast<uint32_t>(bw)),
     topLimbActiveBits(static_cast<uint32_t>(ceilRem(bitwidth(), limbSize * CHAR_BIT)))
 {
+    assert(bw > 0);
     assert(bw <= maxBitwidth());
     if (isLocal()) {
         singleLimb = value & topLimbMask();
@@ -202,6 +203,7 @@ APInt::APInt(uint64_t value, size_t bw):
 }
 
 APInt::APInt(std::span<Limb const> limbs, size_t bitwidth): APInt(bitwidth) {
+    assert(bitwidth > 0);
     auto* const lp = limbPtr();
     std::copy_n(limbs.begin(), std::min(limbs.size(), numLimbs()), lp);
     lp[numLimbs() - 1] &= topLimbMask();
@@ -500,13 +502,93 @@ APInt& APInt::ashr(int nb) {
     return *this;
 }
 
+static void rotlShort(APInt::Limb* l, size_t numLimbs, size_t bitOffset) {
+    assert(bitOffset < limbBitSize);
+    Limb carry = 0;
+    size_t const rightShiftAmount = limbBitSize - bitOffset;
+    for (size_t i = 0; i < numLimbs; ++i) {
+        Limb const newCarry = rightShiftAmount == limbBitSize ? 0 : l[i] >> rightShiftAmount;
+        l[i] <<= bitOffset;
+        l[i] |= carry;
+        carry = newCarry;
+    }
+    l[0] |= carry;
+}
+
 APInt& APInt::rotl(int numBits) {
-    assert(false);
+    assert(numBits < _bitwidth);
+    size_t const bitOffset = numBits % limbBitSize;
+    size_t const limbOffset = numBits / limbBitSize;
+    Limb* l = limbPtr();
+    if (numBits < limbBitSize) {
+        rotlShort(l, numLimbs(), bitOffset);
+    }
+    else {
+        size_t i = numLimbs() - limbOffset;
+        size_t j = numLimbs();
+        size_t k = limbOffset;
+        Limb* const buffer = static_cast<Limb*>(alloca(limbOffset * limbBitSize));
+        while (i > 0) {
+            --i;
+            --j;
+            --k;
+            if (k < limbOffset) {
+                buffer[k] = l[j];
+            }
+            l[j] = l[i];
+        }
+        k = limbOffset;
+        while (j > 0) {
+            --j;
+            --k;
+            l[j] = buffer[k];
+        }
+        rotlShort(l + limbOffset, numLimbs() - limbOffset, bitOffset);
+    }
     return *this;
 }
 
+static void rotrShort(APInt::Limb* l, size_t numLimbs, size_t bitOffset) {
+    using Limb = APInt::Limb;
+    constexpr size_t limbBitSize = sizeof(Limb) * CHAR_BIT;
+    assert(bitOffset < limbBitSize);
+    Limb carry = 0;
+    size_t const leftShiftAmount = limbBitSize - bitOffset;
+    for (size_t i = numLimbs; i > 0;) {
+        --i;
+        Limb const newCarry = leftShiftAmount == limbBitSize ? 0 : l[i] << leftShiftAmount;
+        l[i] >>= bitOffset;
+        l[i] |= carry;
+        carry = newCarry;
+    }
+    l[numLimbs - 1] |= carry;
+}
+
 APInt& APInt::rotr(int numBits) {
-    assert(false);
+    assert(numBits >= 0);
+    assert(numBits < _bitwidth);
+    size_t const bitOffset = numBits % limbBitSize;
+    size_t const limbOffset = numBits / limbBitSize;
+    Limb* l = limbPtr();
+    if (numBits < limbBitSize) {
+        rotrShort(l, numLimbs(), bitOffset);
+    }
+    else {
+        size_t i = limbOffset;
+        size_t j = 0;
+        Limb* const buffer = static_cast<Limb*>(alloca(limbOffset * limbBitSize));
+        for (; i < numLimbs(); ++i, ++j) {
+            if (j < limbOffset) {
+                buffer[j] = l[j];
+            }
+            l[j] = l[i];
+        }
+        size_t k = 0;
+        for (; j < numLimbs(); ++j, ++k) {
+            l[j] = buffer[k];
+        }
+        rotrShort(l, numLimbs() - limbOffset, bitOffset);
+    }
     return *this;
 }
 
