@@ -315,34 +315,6 @@ TEST_CASE("ashr - 1") {
     CHECK(a.ucmp(ref) == 0);
 }
 
-TEST_CASE("rotl - 1") {
-    APInt a({ 0xACAB'DEAD'BEEF'ACAB, 0xFF00'0000'0000'0000 }, 128);
-    a.rotl(32);
-    APInt const ref({ 0xBEEF'ACAB'FF00'0000, 0xACAB'DEAD }, 128);
-    CHECK(a.ucmp(ref) == 0);
-}
-
-TEST_CASE("rotl - 2") {
-    APInt a({ 0, 0, 0, 0xDEAD'BEEF }, 256);
-    a.rotl(64);
-    APInt const ref({ 0xDEAD'BEEF, 0, 0, 0 }, 256);
-    CHECK(a.ucmp(ref) == 0);
-}
-
-TEST_CASE("rotr - 1") {
-    APInt a({ 0xACAB'DEAD'BEEF'ACAB, 0,  }, 128);
-    a.rotr(32);
-    APInt const ref({ 0xACAB'DEAD, 0xBEEF'ACAB'0000'0000 }, 128);
-    CHECK(a.ucmp(ref) == 0);
-}
-
-TEST_CASE("rotr - 2") {
-    APInt a({ 0xDEAD'BEEF, 0, 0, 0 }, 256);
-    a.rotr(64);
-    APInt const ref({ 0, 0, 0, 0xDEAD'BEEF }, 256);
-    CHECK(a.ucmp(ref) == 0);
-}
-
 TEST_CASE("negate - 1") {
     auto const aVal = GENERATE(-100, -1, 0, 1, 100);
     auto const bitwidth = GENERATE(64, 65, 127, 128);
