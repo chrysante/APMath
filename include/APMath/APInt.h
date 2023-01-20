@@ -238,11 +238,34 @@ public:
     /// \param base must be between 0 and 36 (inclusive)
     std::string signedToString(int base = 10) const;
     
+    /// View over limbs
+    std::span<Limb const> limbs() const { return { limbPtr(), numLimbs() }; }
+    
+    /// Convert to native integral type
+    template <typename T>
+    T to() const {
+        static_assert(std::is_arithmetic_v<T>);
+        assert(bitwidth() <= sizeof(T) * CHAR_BIT);
+        return static_cast<T>(limbPtr()[0]);
+    }
+    
+    /// Compute a 64 bit of of this integer.
+    /// Note that this is not a cryptographic hash.
+    std::size_t hash() const;
+    
     /// Try to convert \p str to \p APInt
     /// \param str All characters except ones representing digits in the specified base and an initial '-' are ignored.
     /// Result is exactly a wide as necessary to represent the parsed integer.
     /// \param base must be between 0 and 36 (inclusive)
     static std::optional<APInt> parse(std::string_view str, int base = 10);
+    
+    /// Compare integers for equality.
+    /// Note that relational comparisons are not exposed as C++ operators due to the ambiguity of signedness.
+    /// Use \p ucmp() and \p scmp() to compare order.
+    bool operator==(APInt const& rhs) const { return ucmp(rhs) == 0; }
+    
+    /// \overload
+    bool operator==(std::uint64_t rhs) const { return ucmp(rhs) == 0; }
     
 private:
     friend APInt mul(APInt const& lhs, APInt const& rhs);
@@ -259,7 +282,7 @@ private:
     
     Limb topLimbMask() const { return topLimbActiveBits == 64 ? Limb(-1) : (Limb(1) << topLimbActiveBits) - 1; }
     
-    Limb const* limbPtr() const { return isLocal() ? &singleLimb : limbs; }
+    Limb const* limbPtr() const { return isLocal() ? &singleLimb : heapLimbs; }
     Limb* limbPtr() { return const_cast<Limb*>(static_cast<APInt const*>(this)->limbPtr()); }
     
     int highbit() const {
@@ -274,7 +297,7 @@ private:
     std::uint32_t topLimbActiveBits;
     union {
         Limb singleLimb;
-        Limb* limbs;
+        Limb* heapLimbs;
     };
 };
 
@@ -291,3 +314,10 @@ inline std::size_t APMath::internal::ceilRem(std::size_t a, std::size_t b) {
     }
     return result;
 }
+
+template <>
+struct std::hash<APMath::APInt> {
+    std::size_t operator()(APMath::APInt const& value) const {
+        return value.hash();
+    }
+};

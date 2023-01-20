@@ -196,9 +196,9 @@ APInt::APInt(uint64_t value, size_t bw):
         singleLimb = value & topLimbMask();
     }
     else {
-        limbs = allocate(numLimbs());
-        std::memset(limbs, 0, byteSize());
-        limbs[0] = value;
+        heapLimbs = allocate(numLimbs());
+        std::memset(heapLimbs, 0, byteSize());
+        heapLimbs[0] = value;
     }
 }
 
@@ -217,8 +217,8 @@ APInt::APInt(APInt const& rhs):
         singleLimb = rhs.singleLimb;
     }
     else {
-        limbs = static_cast<Limb*>(std::malloc(byteSize()));
-        std::memcpy(limbs, rhs.limbs, byteSize());
+        heapLimbs = static_cast<Limb*>(std::malloc(byteSize()));
+        std::memcpy(heapLimbs, rhs.heapLimbs, byteSize());
     }
 }
 
@@ -230,10 +230,10 @@ APInt::APInt(APInt&& rhs) noexcept:
         singleLimb = rhs.singleLimb;
     }
     else {
-        limbs = rhs.limbs;
+        heapLimbs = rhs.heapLimbs;
         rhs._bitwidth = 0;
         rhs.topLimbActiveBits = 0;
-        rhs.limbs = nullptr;
+        rhs.heapLimbs = nullptr;
     }
 }
 
@@ -247,22 +247,22 @@ APInt& APInt::operator=(APInt const& rhs) {
             singleLimb = rhs.singleLimb;
         }
         else {
-            limbs = allocate(rhs.numLimbs());
-            std::memcpy(limbs, rhs.limbs, rhs.byteSize());
+            heapLimbs = allocate(rhs.numLimbs());
+            std::memcpy(heapLimbs, rhs.heapLimbs, rhs.byteSize());
         }
     }
     else {
         if (rhs.isLocal()) {
-            deallocate(limbs, thisNumLimbs);
+            deallocate(heapLimbs, thisNumLimbs);
             singleLimb = rhs.singleLimb;
         }
         else {
             if (thisNumLimbs != rhs.numLimbs()) {
                 /// Need to reallocate
-                deallocate(limbs, thisNumLimbs);
-                limbs = allocate(rhs.numLimbs());
+                deallocate(heapLimbs, thisNumLimbs);
+                heapLimbs = allocate(rhs.numLimbs());
             }
-            std::memcpy(limbs, rhs.limbs, rhs.byteSize());
+            std::memcpy(heapLimbs, rhs.heapLimbs, rhs.byteSize());
         }
     }
     return *this;
@@ -279,22 +279,22 @@ APInt& APInt::operator=(APInt&& rhs) noexcept {
         }
         else {
             /// We steal rhs's buffer
-            limbs = rhs.limbs;
+            heapLimbs = rhs.heapLimbs;
             rhs._bitwidth = 0;
             rhs.topLimbActiveBits = 0;
-            rhs.limbs = nullptr;
+            rhs.heapLimbs = nullptr;
         }
     }
     else {
         if (rhs.isLocal()) {
-            deallocate(limbs, thisNumLimbs);
+            deallocate(heapLimbs, thisNumLimbs);
             singleLimb = rhs.singleLimb;
         }
         else {
             /// Both not local, we swap
             std::swap(_bitwidth, rhs._bitwidth);
             std::swap(topLimbActiveBits, rhs.topLimbActiveBits);
-            std::swap(limbs, rhs.limbs);
+            std::swap(heapLimbs, rhs.heapLimbs);
         }
     }
     return *this;
@@ -304,7 +304,7 @@ APInt::~APInt() {
     if (isLocal()) {
         return;
     }
-    deallocate(limbs, numLimbs());
+    deallocate(heapLimbs, numLimbs());
 }
 
 void APInt::swap(APInt& rhs) noexcept {
@@ -368,7 +368,7 @@ APInt& APInt::btwand(APInt const& rhs) {
     assert(bitwidth() == rhs.bitwidth());
     Limb* const l = limbPtr();
     Limb const* const r = rhs.limbPtr();
-    for (size_t i = 0; i < byteSize(); ++i) {
+    for (size_t i = 0; i < numLimbs(); ++i) {
         l[i] &= r[i];
     }
     return *this;
@@ -378,7 +378,7 @@ APInt& APInt::btwor(APInt const& rhs) {
     assert(bitwidth() == rhs.bitwidth());
     Limb* const l = limbPtr();
     Limb const* const r = rhs.limbPtr();
-    for (size_t i = 0; i < byteSize(); ++i) {
+    for (size_t i = 0; i < numLimbs(); ++i) {
         l[i] |= r[i];
     }
     return *this;
@@ -388,7 +388,7 @@ APInt& APInt::btwxor(APInt const& rhs) {
     assert(bitwidth() == rhs.bitwidth());
     Limb* const l = limbPtr();
     Limb const* const r = rhs.limbPtr();
-    for (size_t i = 0; i < byteSize(); ++i) {
+    for (size_t i = 0; i < numLimbs(); ++i) {
         l[i] ^= r[i];
     }
     l[numLimbs() - 1] &= topLimbMask();
@@ -407,8 +407,10 @@ static void lshlShort(APInt::Limb* l, size_t numLimbs, size_t bitOffset) {
     }
 }
 
-APInt& APInt::lshl(int numBits) {
-    assert(numBits < _bitwidth);
+APInt& APInt::lshl(int nb) {
+    assert(nb >= 0);
+    assert(nb < _bitwidth);
+    size_t const numBits = static_cast<size_t>(nb);
     size_t const bitOffset = numBits % limbBitSize;
     size_t const limbOffset = numBits / limbBitSize;
     Limb* l = limbPtr();
@@ -447,9 +449,10 @@ static void lshrShort(APInt::Limb* l, size_t numLimbs, size_t bitOffset) {
     }
 }
 
-APInt& APInt::lshr(int numBits) {
-    assert(numBits >= 0);
-    assert(numBits < _bitwidth);
+APInt& APInt::lshr(int nb) {
+    assert(nb >= 0);
+    assert(nb < _bitwidth);
+    size_t const numBits = static_cast<size_t>(nb);
     size_t const bitOffset = numBits % limbBitSize;
     size_t const limbOffset = numBits / limbBitSize;
     Limb* l = limbPtr();
@@ -524,7 +527,7 @@ APInt& APInt::negate() {
 
 APInt& APInt::btwnot() {
     Limb* const l = limbPtr();
-    for (size_t i = 0; i < byteSize(); ++i) {
+    for (size_t i = 0; i < numLimbs(); ++i) {
         l[i] = ~l[i];
     }
     l[numLimbs() - 1] &= topLimbMask();
@@ -608,9 +611,9 @@ int APInt::ucmp(uint64_t rhs) const {
 
 static char intToSymbol(Limb l) {
     if (l < 10) {
-        return '0' + l;
+        return static_cast<char>('0' + static_cast<int>(l));
     }
-    return 'A' + l - 10;
+    return static_cast<char>('A' + static_cast<int>(l) - 10);
 }
 
 std::string APInt::toString(int b) const& {
@@ -621,7 +624,7 @@ std::string APInt::toString(int b)&& {
     assert(b >= 2);
     assert(b <= 36);
     std::string res;
-    APInt const base(b, bitwidth());
+    APInt const base(uint64_t(b), bitwidth());
     while (ucmp(0) != 0) {
         auto [q, r] = udivrem(*this, base);
         assert(r.ucmp(base) < 0);
@@ -645,11 +648,11 @@ std::string APInt::signedToString(int b) const {
     return res;
 }
 
-static int charDigitToInt(char d) {
+static char charDigitToInt(char d) {
     if (d >= '0' && d <= '9') {
         return d - '0';
     }
-    char const D = std::toupper(d);
+    char const D = static_cast<char>(std::toupper(d));
     return D - 'A' + 10;
 }
 
@@ -659,7 +662,7 @@ static void div2(std::vector<char>& str, int base) {
     for (char& d: str) {
         int const additive = nextAdditive;
         nextAdditive = d % 2 ? halfBase : 0;
-        d = d / 2 + additive;
+        d = static_cast<char>(d / 2 + additive);
     }
     if (str.size() > 1 && str[0] == 0) {
         str.erase(str.begin());
@@ -730,6 +733,20 @@ std::optional<APInt> APInt::parse(std::string_view s, int base) {
         res.negate();
     }
     return res;
+}
+
+constexpr size_t initSeed = 0x9e3779b97f4a7c15;
+
+void hashCombine(std::size_t& seed, Limb v) {
+    seed ^= v + initSeed + (seed << 6) + (seed >> 2);
+}
+
+size_t APInt::hash() const {
+    size_t seed = initSeed;
+    for (Limb const l: limbs()) {
+        hashCombine(seed, l);
+    }
+    return seed;
 }
 
 APInt::Limb* APInt::allocate(size_t numLimbs) {
