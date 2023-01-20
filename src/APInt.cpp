@@ -623,6 +623,7 @@ std::string APInt::toString(int b) const& {
 std::string APInt::toString(int b)&& {
     assert(b >= 2);
     assert(b <= 36);
+    zext(std::max<size_t>(8, bitwidth()));
     std::string res;
     APInt const base(uint64_t(b), bitwidth());
     while (ucmp(0) != 0) {
@@ -643,7 +644,9 @@ std::string APInt::signedToString(int b) const {
     if (!neg) {
         return toString();
     }
-    auto res = APMath::negate(*this).toString();
+    auto negative = APMath::negate(*this);
+    negative.sext(std::max<size_t>(8, negative.bitwidth()));
+    auto res = negative.toString();
     res.insert(res.begin(), '-');
     return res;
 }
