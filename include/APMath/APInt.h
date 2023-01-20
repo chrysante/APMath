@@ -6,17 +6,57 @@
 #include <string>
 #include <utility>
 
+namespace APMath::internal {
+
+using Limb = std::uint64_t;
+
+static constexpr std::size_t limbSize = sizeof(Limb);
+static constexpr std::size_t limbBitSize = limbSize * CHAR_BIT;
+static constexpr Limb limbMax = Limb(-1);
+
+std::size_t ceilDiv(std::size_t a, std::size_t b);
+std::size_t ceilRem(std::size_t a, std::size_t b);
+
+} // namespace APMath::internal
+
 namespace APMath {
 
 class APInt;
 
-std::pair<APInt, APInt> udivmod(APInt const& numerator, APInt const& divisor);
-std::pair<APInt, APInt> sdivmod(APInt const& numerator, APInt const& divisor);
+APInt add(APInt lhs, APInt const& rhs);
+APInt sub(APInt lhs, APInt const& rhs);
+APInt mul(APInt const& lhs, APInt const& rhs);
+std::pair<APInt, APInt> udivrem(APInt const& numerator, APInt const& divisor);
+APInt udiv(APInt const& lhs, APInt const& rhs);
+APInt urem(APInt const& lhs, APInt const& rhs);
+std::pair<APInt, APInt> sdivrem(APInt const& numerator, APInt const& divisor);
+APInt sdiv(APInt const& lhs, APInt const& rhs);
+APInt srem(APInt const& lhs, APInt const& rhs);
+
+APInt btwand(APInt lhs, APInt const& rhs);
+APInt btwor(APInt lhs, APInt const& rhs);
+APInt btwxor(APInt lhs, APInt const& rhs);
+
+APInt lshl(APInt operand, int numBits);
+APInt lshr(APInt operand, int numBits);
+
+APInt ashl(APInt operand, int numBits);
+APInt ashr(APInt operand, int numBits);
+
+APInt rotl(APInt operand, int numBits);
+APInt rotr(APInt operand, int numBits);
+
+APInt negate(APInt operand);
+APInt btwnot(APInt operand);
+
+int scmp(APInt const& lhs, APInt const& rhs);
+int ucmp(APInt const& lhs, APInt const& rhs);
+int ucmp(APInt const& lhs, std::uint64_t rhs);
 
 /// Arbitraty precision integer.
 class APInt {
 public:
-    using Limb = std::uint64_t;
+    using Limb = internal::Limb;
     
 public:
     explicit APInt(std::size_t bitwidth);
@@ -35,16 +75,14 @@ public:
     APInt& add(APInt const& rhs);
     APInt& sub(APInt const& rhs);
     APInt& mul(APInt const& rhs);
-    APInt& sdiv(APInt const& rhs);
     APInt& udiv(APInt const& rhs);
-    APInt& srem(APInt const& rhs);
     APInt& urem(APInt const& rhs);
+    APInt& sdiv(APInt const& rhs);
+    APInt& srem(APInt const& rhs);
     
     APInt& btwand(APInt const& rhs);
     APInt& btwor(APInt const& rhs);
     APInt& btwxor(APInt const& rhs);
-    
-    APInt& btwnot();
     
     APInt& lshl(int numBits);
     APInt& lshr(int numBits);
@@ -54,8 +92,15 @@ public:
     
     APInt& rotl(int numBits);
     APInt& rotr(int numBits);
+
+    APInt& negate();
+    APInt& btwnot();
+    
+    APInt& zext(std::size_t bitwidth);
+    APInt& sext(std::size_t bitwidth);
     
     int scmp(APInt const& rhs) const;
+    bool negative() const;
     int ucmp(APInt const& rhs) const;
     int ucmp(std::uint64_t rhs) const;
     
@@ -65,36 +110,27 @@ public:
     
     std::string toString(int base = 10) const;
     
-    friend std::pair<APInt, APInt> udivmod(APInt const& numerator, APInt const& divisor);
-    friend std::pair<APInt, APInt> sdivmod(APInt const& numerator, APInt const& divisor);
+    friend APInt mul(APInt const& lhs, APInt const& rhs);
+    friend std::pair<APInt, APInt> udivrem(APInt const& numerator, APInt const& divisor);
+    friend std::pair<APInt, APInt> sdivrem(APInt const& numerator, APInt const& divisor);
     
 private:
-    static constexpr std::size_t limbSize = sizeof(Limb);
-    static constexpr std::size_t limbBitSize = limbSize * CHAR_BIT;
-    static constexpr Limb limbMax = Limb(-1);
-    
-    static std::size_t ceilDiv(std::size_t a, std::size_t b) {
-        return a / b + !!(a % b);
-    }
-    
-    static std::size_t ceilRem(std::size_t a, std::size_t b) {
-        std::size_t const result = a % b;
-        if (result == 0) {
-            return b;
-        }
-        return result;
-    }
-    
     bool isLocal() const { return numLimbs() <= 1; }
     
-    std::size_t numLimbs() const { return ceilDiv(_bitwidth, limbBitSize); }
+    std::size_t numLimbs() const {
+        return internal::ceilDiv(_bitwidth, internal::limbBitSize);
+    }
     
-    std::size_t byteSize() const { return numLimbs() * limbSize; }
+    std::size_t byteSize() const { return numLimbs() * internal::limbSize; }
     
     Limb topLimbMask() const { return topLimbActiveBits == 64 ? Limb(-1) : (Limb(1) << topLimbActiveBits) - 1; }
     
     Limb const* limbPtr() const { return isLocal() ? &singleLimb : limbs; }
     Limb* limbPtr() { return const_cast<Limb*>(static_cast<APInt const*>(this)->limbPtr()); }
+    
+    int highbit() const {
+        return static_cast<int>(limbPtr()[numLimbs() - 1] >> (topLimbActiveBits - 1));
+    }
     
     Limb* allocate(std::size_t numLimbs);
     void deallocate(Limb* ptr, std::size_t numLimbs);
@@ -109,3 +145,15 @@ private:
 };
 
 } // namespace APMath
+
+inline std::size_t APMath::internal::ceilDiv(std::size_t a, std::size_t b) {
+    return a / b + !!(a % b);
+}
+
+inline std::size_t APMath::internal::ceilRem(std::size_t a, std::size_t b) {
+    std::size_t const result = a % b;
+    if (result == 0) {
+        return b;
+    }
+    return result;
+}
