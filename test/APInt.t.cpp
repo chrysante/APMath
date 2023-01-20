@@ -8,9 +8,9 @@
 using namespace APMath;
 
 TEST_CASE("Lifetime") {
-    std::size_t const bitwidth = GENERATE(1, 7, 8, 32, 64, 65, 127, 128, 256);
-    uint64_t const lowWord = GENERATE(-100, 0xDEAD'BEEF, 0, 1, 997);
-    uint64_t const highWord = GENERATE(-100, 0xDEAD'BEEF, 0, 1, 997);
+    size_t const bitwidth = GENERATE(1u, 7u, 8u, 32u, 64u, 65u, 127u, 128u, 256u);
+    uint64_t const lowWord = GENERATE(static_cast<uint64_t>(-100), 0xDEAD'BEEF, 0u, 1u, 997u);
+    uint64_t const highWord = GENERATE(-100u, 0xDEAD'BEEF, 0u, 1u, 997u);
     APInt const a({ lowWord, highWord }, bitwidth);
     SECTION("Copy construction") {
         APInt const b = a;
@@ -22,13 +22,13 @@ TEST_CASE("Lifetime") {
         CHECK(a.ucmp(b) == 0);
     }
     SECTION("Copy assignment") {
-        auto const bWidth = GENERATE(1, 128);
+        auto const bWidth = GENERATE(1u, 128u);
         APInt b(bWidth);
         b = a;
         CHECK(a.ucmp(b) == 0);
     }
     SECTION("Move assignment") {
-        auto const bWidth = GENERATE(1, 128);
+        auto const bWidth = GENERATE(1u, 128u);
         APInt b(bWidth);
         APInt tmp = a;
         b = std::move(tmp);
@@ -37,13 +37,13 @@ TEST_CASE("Lifetime") {
 }
 
 TEST_CASE("ucmp - 1") {
-    std::size_t const bitwidth = GENERATE(1, 7, 8, 32, 64, 127, 128, 256);
+    std::size_t const bitwidth = GENERATE(1u, 7u, 8u, 32u, 64u, 127u, 128u, 256u);
     APInt const i(bitwidth);
     CHECK(i.ucmp(0) == 0);
 }
 
 TEST_CASE("ucmp - 2") {
-    std::size_t const bitwidth = GENERATE(3, 7, 8, 32, 64, 127, 128, 256);
+    std::size_t const bitwidth = GENERATE(3u, 7u, 8u, 32u, 64u, 127u, 128u, 256u);
     APInt const i(5, bitwidth);
     INFO("Bitwidth: " << bitwidth);
     CHECK(i.ucmp(5) == 0);
@@ -54,7 +54,7 @@ TEST_CASE("ucmp - 2") {
 }
 
 TEST_CASE("ucmp - 3") {
-    std::size_t const bitwidth = GENERATE(3, 7, 8, 32, 64, 127, 128, 256);
+    std::size_t const bitwidth = GENERATE(3u, 7u, 8u, 32u, 64u, 127u, 128u, 256u);
     APInt const a(5, bitwidth);
     APInt const b(std::numeric_limits<std::uint64_t>::max(), bitwidth);
     APInt const c(5, bitwidth);
@@ -76,9 +76,9 @@ TEST_CASE("ucmp - 3") {
 }
 
 TEST_CASE("scmp - 1") {
-    auto const aVal = GENERATE(-100, -1, 0, 10, 100);
-    auto const bVal = GENERATE(-100, -1, 0, 10, 100);
-    auto const bitwidth = GENERATE(8, 63, 64, 65);
+    int64_t const aVal = GENERATE(-100, -1, 0, 10, 100);
+    int64_t const bVal = GENERATE(-100, -1, 0, 10, 100);
+    size_t const bitwidth = GENERATE(8u, 63u, 64u, 65u);
     APInt const a({ uint64_t(aVal), aVal >= 0 ? 0ull : -1ull }, bitwidth);
     APInt const b({ uint64_t(bVal), bVal >= 0 ? 0ull : -1ull }, bitwidth);
     if (aVal == bVal) {
@@ -88,6 +88,7 @@ TEST_CASE("scmp - 1") {
         CHECK(a.scmp(b) > 0);
     }
     else {
+        INFO("a = " << a.signedToString() << "\nb = " << b.signedToString());
         CHECK(a.scmp(b) < 0);
     }
 }
@@ -198,15 +199,15 @@ TEST_CASE("mul - 2") {
 }
 
 TEST_CASE("mul - 3") {
-    APInt a(-1, 64);
-    APInt b(-1, 64);
+    APInt a(uint64_t(-1), 64);
+    APInt b(uint64_t(-1), 64);
     APInt ref(uint64_t(-1) * uint64_t(-1), 64);
     a.mul(b);
     CHECK(a.ucmp(ref) == 0);
 }
 
 TEST_CASE("mul - 4") {
-    APInt a(-4, 64);
+    APInt a(uint64_t(-4), 64);
     APInt b(7, 64);
     APInt ref(uint64_t(-28), 64);
     a.mul(b);
@@ -214,9 +215,9 @@ TEST_CASE("mul - 4") {
 }
 
 TEST_CASE("udivrem - 1") {
-    uint64_t const aVal = GENERATE(0, 1, 7, 10, 100, 99999, 0xFFFF'FFFF'FFFF'FFFFull);
-    uint64_t const bVal = GENERATE(1, 2, 7, 99999, 0xFFFF'FFFF'FFFF'FFFFull);
-    auto const bitwidth = GENERATE(64, 65, 127, 128);
+    uint64_t const aVal = GENERATE(0u, 1u, 7u, 10u, 100u, 99999u, 0xFFFF'FFFF'FFFF'FFFFull);
+    uint64_t const bVal = GENERATE(1u, 2u, 7u, 99999u, 0xFFFF'FFFF'FFFF'FFFFull);
+    auto const bitwidth = GENERATE(64u, 65u, 127u, 128u);
     APInt const a(aVal, bitwidth);
     APInt const b(bVal, bitwidth);
     auto const [q, r] = udivrem(a, b);
@@ -227,17 +228,17 @@ TEST_CASE("udivrem - 1") {
 TEST_CASE("sdivrem - 1") {
     int64_t const aVal = GENERATE(-100, 0, 1, 7, 10, 100, 99999);
     int64_t const bVal = GENERATE(-100, 1, 2, 7, 99999);
-    auto const bitwidth = GENERATE(64, 65, 127, 128);
-    APInt a(aVal, 64);
+    size_t const bitwidth = GENERATE(64u, 65u, 127u, 128u);
+    APInt a(uint64_t(aVal), 64);
     a.sext(bitwidth);
-    APInt b(bVal, 64);
+    APInt b(uint64_t(bVal), 64);
     b.sext(bitwidth);
     auto const [q, r] = sdivrem(a, b);
     int64_t const qVal = aVal / bVal;
-    APInt qRef(qVal, 64);
+    APInt qRef(uint64_t(qVal), 64);
     qRef.sext(bitwidth);
     int64_t const rVal = aVal % bVal;
-    APInt rRef(rVal, 64);
+    APInt rRef(uint64_t(rVal), 64);
     rRef.sext(bitwidth);
     CHECK(q.ucmp(qRef) == 0);
     CHECK(r.ucmp(rRef) == 0);
@@ -306,18 +307,18 @@ TEST_CASE("lshr - 4") {
 }
 
 TEST_CASE("ashr - 1") {
-    size_t const bitwidth = GENERATE(14, 32, 64, 65, 128);
-    APInt a(-64, 64);
+    size_t const bitwidth = GENERATE(14u, 32u, 64u, 65u, 128u);
+    APInt a(uint64_t(-64), 64);
     a.sext(bitwidth);
     a.ashr(2);
-    APInt ref(-16, 64);
+    APInt ref(uint64_t(-16), 64);
     ref.sext(bitwidth);
     CHECK(a.ucmp(ref) == 0);
 }
 
 TEST_CASE("negate - 1") {
-    auto const aVal = GENERATE(-100, -1, 0, 1, 100);
-    auto const bitwidth = GENERATE(64, 65, 127, 128);
+    uint64_t const aVal = GENERATE(-100u, uint64_t(-1), 0u, 1u, 100u);
+    size_t const bitwidth = GENERATE(64u, 65u, 127, 128u);
     APInt a(aVal, 64);
     a.sext(bitwidth);
     a.negate();
@@ -347,9 +348,9 @@ TEST_CASE("sext - 1") {
 }
 
 TEST_CASE("sext - 2") {
-    APInt a(-6, 4);
+    APInt a(uint64_t(-6), 4);
     a.sext(64);
-    CHECK(a.ucmp(-6) == 0);
+    CHECK(a.ucmp(uint64_t(-6)) == 0);
     a.sext(128);
     CHECK(a.ucmp(APInt({ static_cast<uint64_t>(-6), static_cast<uint64_t>(-1) }, 128)) == 0);
     a.sext(1);
@@ -358,10 +359,10 @@ TEST_CASE("sext - 2") {
 
 TEST_CASE("String conversion") {
     CHECK(APInt(5, 64).toString(16) == "5");
-    CHECK(APInt(-1, 64).toString(16) == "FFFFFFFFFFFFFFFF");
-    CHECK(APInt(-1, 64).sext(128).toString(16) == "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+    CHECK(APInt(uint64_t(-1), 64).toString(16) == "FFFFFFFFFFFFFFFF");
+    CHECK(APInt(uint64_t(-1), 64).sext(128).toString(16) == "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
     CHECK(APInt(128761486, 64).toString(10) == "128761486");
-    CHECK(APInt(-5, 64).signedToString(10) == "-5");
+    CHECK(APInt(uint64_t(-5), 64).signedToString(10) == "-5");
     CHECK(APInt(0, 1).toString(10) == "0");
     CHECK(APInt(0, 1).signedToString(10) == "0");
     CHECK(APInt(0xFF, 11).toString(10) == "255");
@@ -372,7 +373,7 @@ TEST_CASE("String conversion") {
 TEST_CASE("String parse") {
     APInt const a = APInt::parse(" - f'F", 16).value();
     CHECK(a.bitwidth() == 9);
-    CHECK(a.ucmp(-255) == 0);
+    CHECK(a.ucmp(uint64_t(-255)) == 0);
     APInt const b = APInt::parse("0", 10).value();
     CHECK(b.bitwidth() == 1);
     CHECK(b.ucmp(0) == 0);
