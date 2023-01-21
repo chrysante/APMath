@@ -574,7 +574,7 @@ bool APInt::negative() const {
 
 static int ucmpImpl(APInt::Limb const* lhs, size_t lhsNumLimbs, APInt::Limb const* rhs, size_t rhsNumLimbs) {
     if (lhsNumLimbs != rhsNumLimbs) {
-        /// A one is bigger than the other, we need to test the top limbs separately.
+        /// If one is bigger than the other, we need to test the top limbs separately.
         auto const [bigPtr, bigSize, smallPtr, smallSize] = lhsNumLimbs > rhsNumLimbs ?
             std::tuple{ lhs, lhsNumLimbs, rhs, rhsNumLimbs } :
             std::tuple{ rhs, rhsNumLimbs, lhs, lhsNumLimbs };
