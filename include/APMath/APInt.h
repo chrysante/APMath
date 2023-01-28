@@ -1,3 +1,6 @@
+#ifndef APMATH_APINT_H_
+#define APMATH_APINT_H_
+
 #include <cstdint>
 #include <cstddef>
 #include <climits>
@@ -85,7 +88,7 @@ APInt rotl(APInt operand, int numBits);
 /// Right rotate \p operand by \p numBits bits.
 APInt rotr(APInt operand, int numBits);
 
-/// Copute arithmetic signed complement of \p operand
+/// Compute arithmetic signed complement of \p operand
 APInt negate(APInt operand);
 
 /// Compute bitwise comlement of \p operand
@@ -255,7 +258,7 @@ public:
     
     /// Try to convert \p str to \p APInt
     /// \param str All characters except ones representing digits in the specified base and an initial '-' are ignored.
-    /// Result is exactly a wide as necessary to represent the parsed integer.
+    /// Result is exactly as wide as necessary to represent the parsed integer.
     /// \param base must be between 0 and 36 (inclusive)
     static std::optional<APInt> parse(std::string_view str, int base = 10);
     
@@ -321,3 +324,5 @@ struct std::hash<APMath::APInt> {
         return value.hash();
     }
 };
+
+#endif // APMATH_APINT_H_
