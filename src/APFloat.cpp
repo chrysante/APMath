@@ -1,5 +1,7 @@
 #include "APFloat.h"
 
+#include <sstream>
+
 using namespace APMath;
 
 APFloat APMath::add(APFloat lhs, APFloat const& rhs) {
@@ -47,7 +49,7 @@ APFloat::APFloat(long double value, APFloatPrec precision):
         _f32 = static_cast<float>(value);
     }
     else {
-        _f64 = static_cast<float>(value);
+        _f64 = static_cast<double>(value);
     }
 }
 
@@ -149,20 +151,23 @@ int APFloat::cmp(APFloat const& rhs) const {
     }
 }
 
-std::string APFloat::toString() {
+std::string APFloat::toString() const {
+    std::stringstream sstr;
+    sstr << std::fixed;
     if (isSingle()) {
-        return std::to_string(_f32);
+        sstr << _f32;
     }
     else {
-        return std::to_string(_f64);
+        sstr << _f64;
     }
+    return std::move(sstr).str();
 }
 
-std::optional<APFloat> APFloat::parse(std::string_view str) {
+std::optional<APFloat> APFloat::parse(std::string_view str, APFloatPrec precision) {
     char* ptr = nullptr;
     double res = std::strtod(str.data(), &ptr);
     if (ptr == str.data()) {
         return std::nullopt;
     }
-    return APFloat(res, APFloatPrec::Double);
+    return APFloat(res, precision);
 }

@@ -7,6 +7,8 @@ externalincludedirs "include"
 
 files { 
     "include/APMath/APInt.h",
-    "src/APInt.cpp"
+    "include/APMath/APFloat.h",
+    "src/APInt.cpp",
+    "src/APFloat.cpp"
 }
 

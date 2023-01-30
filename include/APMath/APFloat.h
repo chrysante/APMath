@@ -99,7 +99,7 @@ public:
     APFloatPrec precision() const { return { _mantWidth, _expWidth }; }
     
     /// Convert \p *this to a string in the specified base.
-    std::string toString();
+    std::string toString() const;
     
     /// Convert to native float type
     template <typename T>
@@ -115,8 +115,7 @@ public:
     
     /// Try to convert \p str to \p APFloat
     /// \param str All characters except ones representing digits in the specified base, an initial '-' and the first '.' are ignored.
-    /// Result is exactly 64 bits wide. (For now)
-    static std::optional<APFloat> parse(std::string_view str);
+    static std::optional<APFloat> parse(std::string_view str, APFloatPrec precision = APFloatPrec::Double);
     
     /// Compare for equality.
     bool operator==(APFloat const& rhs) const { return cmp(rhs) == 0; }
