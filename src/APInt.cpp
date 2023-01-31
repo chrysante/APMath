@@ -1,4 +1,4 @@
-#include "APInt.h"
+#include <APMath/APInt.h>
 
 #include <cassert>
 #include <cstdlib>
@@ -507,10 +507,12 @@ APInt& APInt::ashr(int nb) {
 
 APInt& APInt::rotl(int numBits) {
     assert(false);
+    std::abort();
 }
 
 APInt& APInt::rotr(int numBits) {
     assert(false);
+    std::abort();
 }
 
 APInt& APInt::negate() {

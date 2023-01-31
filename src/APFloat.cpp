@@ -1,5 +1,6 @@
-#include "APFloat.h"
+#include <APMath/APFloat.h>
 
+#include <cassert>
 #include <sstream>
 
 using namespace APMath;

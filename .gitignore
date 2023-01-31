@@ -3,3 +3,10 @@ build/
 **.xcworkspace
 
 **/.DS_Store
+
+.vs/
+
+**.vcxproj
+**.vcxproj.user
+**.vcxproj.filters
+**.sln
