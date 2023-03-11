@@ -141,82 +141,82 @@ public:
     APInt& operator=(APInt&& rhs) noexcept;
     ~APInt();
     
-    /// Swap \p *this and \p rhs
+    /// Swap `*this` and \p rhs
     void swap(APInt& rhs) noexcept;
     
-    /// \code *this += rhs \endcode
+    /// `*this += rhs`
     APInt& add(APInt const& rhs);
     
-    /// \code *this -= rhs \endcode
+    /// `*this -= rhs`
     APInt& sub(APInt const& rhs);
     
-    /// \code *this *= rhs \endcode
+    /// `*this *= rhs`
     APInt& mul(APInt const& rhs);
     
-    /// \code *this /= rhs \endcode
+    /// `*this /= rhs`
     /// Both operands are interpreted as unsigned integers
     APInt& udiv(APInt const& rhs);
     
-    /// \code *this %= rhs \endcode
+    /// `*this %= rhs`
     /// Both operands are interpreted as unsigned integers
     APInt& urem(APInt const& rhs);
     
-    /// \code *this /= rhs \endcode
+    /// `*this /= rhs`
     /// Both operands are interpreted as signed integers
     APInt& sdiv(APInt const& rhs);
     
-    /// \code *this %= rhs \endcode
+    /// `*this %= rhs`
     /// Both operands are interpreted as signed integers
     APInt& srem(APInt const& rhs);
     
-    /// \code *this &= rhs \endcode
+    /// `*this &= rhs`
     APInt& btwand(APInt const& rhs);
     
-    /// \code *this |= rhs \endcode
+    /// `*this |= rhs`
     APInt& btwor(APInt const& rhs);
     
-    /// \code *this ^= rhs \endcode
+    /// `*this ^= rhs`
     APInt& btwxor(APInt const& rhs);
     
-    /// Logical left shift \p *this by \p numBits bits.
+    /// Logical left shift `*this` by \p numBits bits.
     APInt& lshl(int numBits);
     
-    /// Logical right shift \p *this by \p numBits bits.
+    /// Logical right shift `*this` by \p numBits bits.
     APInt& lshr(int numBits);
     
-    /// Arithmetic left shift \p *this by \p numBits bits.
+    /// Arithmetic left shift `*this` by \p numBits bits.
     APInt& ashl(int numBits);
     
-    /// Arithmetic right shift \p *this by \p numBits bits.
+    /// Arithmetic right shift `*this` by \p numBits bits.
     APInt& ashr(int numBits);
     
-    /// Left rotate \p *this by \p numBits bits.
+    /// Left rotate `*this` by \p numBits bits.
     APInt& rotl(int numBits);
     
-    /// Right rotate \p *this by \p numBits bits.
+    /// Right rotate `*this` by \p numBits bits.
     APInt& rotr(int numBits);
 
-    /// Copute and assign arithmetic signed complement of \p *this
+    /// Copute and assign arithmetic signed complement of `*this`
     APInt& negate();
     
-    /// Copute and assign bitwise complement of \p *this
+    /// Copute and assign bitwise complement of `*this`
     APInt& btwnot();
     
     /// Perform zero extend to \p bitwidth
-    /// If \p bitwidth is less than current bitwidth, \p *this will be shrunk.
+    /// If \p bitwidth is less than current bitwidth, `*this` will be shrunk.
     APInt& zext(std::size_t bitwidth);
     
     /// Perform sign extend to \p bitwidth
-    /// If \p bitwidth is less than current bitwidth, \p *this will be shrunk.
+    /// If \p bitwidth is less than current bitwidth, `*this` will be shrunk.
     APInt& sext(std::size_t bitwidth);
     
-    /// Perform unsigned comparison between \p *this and \p rhs
+    /// Perform unsigned comparison between `*this` and \p rhs
     int ucmp(APInt const& rhs) const;
 
     /// \overload
     int ucmp(std::uint64_t rhs) const;
     
-    /// Perform signed comparison between \p *this and \p rhs
+    /// Perform signed comparison between `*this` and \p rhs
     int scmp(APInt const& rhs) const;
     
     /// Returns wether this integer is negative.
@@ -225,19 +225,19 @@ public:
     /// The bitwidth of this integer.
     std::size_t bitwidth() const { return _bitwidth; }
     
-    /// The maximum number of bits any \p APInt can hold.
+    /// The maximum number of bits any `APInt` can hold.
     static constexpr std::size_t maxBitwidth() { return std::numeric_limits<std::uint32_t>::max(); }
     
-    /// Convert \p *this to a string in the specified base.
-    /// \p this is interpreted as an unsigned integer.
+    /// Convert `*this` to a string in the specified base.
+    /// \param *this is interpreted as an unsigned integer.
     /// \param base must be between 0 and 36 (inclusive)
     std::string toString(int base = 10) const&;
     
     /// \overload
     std::string toString(int base = 10)&&;
     
-    /// Convert \p *this to a string in the specified base.
-    /// \p this is interpreted as a signed integer.
+    /// Convert `*this` to a string in the specified base.
+    /// \param *this is interpreted as a signed integer.
     /// \param base must be between 0 and 36 (inclusive)
     std::string signedToString(int base = 10) const;
     
@@ -256,7 +256,7 @@ public:
     /// Note that this is not a cryptographic hash.
     std::size_t hash() const;
     
-    /// Try to convert \p str to \p APInt
+    /// Try to convert \p str to `APInt`
     /// \param str All characters except ones representing digits in the specified base and an initial '-' are ignored.
     /// Result is exactly as wide as necessary to represent the parsed integer.
     /// \param base must be between 0 and 36 (inclusive)
@@ -264,7 +264,7 @@ public:
     
     /// Compare integers for equality.
     /// Note that relational comparisons are not exposed as C++ operators due to the ambiguity of signedness.
-    /// Use \p ucmp() and \p scmp() to compare order.
+    /// Use `ucmp()` and `scmp()` to compare order.
     bool operator==(APInt const& rhs) const { return ucmp(rhs) == 0; }
     
     /// \overload

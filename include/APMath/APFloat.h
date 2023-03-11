@@ -49,9 +49,9 @@ APFloat precisionCast(APFloat operand, APFloatPrec precision);
 int cmp(APFloat const& lhs, APFloat const& rhs);
 
 /// Arbitraty precision floating point type.
-/// Mantissa and exponent width is specified on construction and can be modified with \p setPrecision()
-/// Operations involving multiple APFloats usually require the operands to be of same precision.
-/// \Note Right now this is implemented in terms of hardware float operations on \p float or \p double type. This is
+/// Mantissa and exponent width is specified on construction and can be modified with `setPrecision()`
+/// Operations involving multiple `APFloat`s usually require the operands to be of same precision.
+/// \Note Right now this is implemented in terms of hardware float operations on `float` or `double` type. This is
 /// temporary until we take the time to implement proper IEEE emulation. Until then only single and double precision are
 /// supported. 
 class APFloat {
@@ -68,37 +68,37 @@ public:
     APFloat& operator=(APFloat&& rhs) noexcept;
     ~APFloat();
     
-    /// Swap \p *this and \p rhs
+    /// Swap `*this` and \p rhs
     void swap(APFloat& rhs) noexcept;
     
-    /// \code *this += rhs \endcode
+    /// `*this += rhs`
     APFloat& add(APFloat const& rhs);
     
-    /// \code *this -= rhs \endcode
+    /// `*this -= rhs`
     APFloat& sub(APFloat const& rhs);
     
-    /// \code *this *= rhs \endcode
+    /// `*this *= rhs`
     APFloat& mul(APFloat const& rhs);
     
-    /// \code *this /= rhs \endcode
+    /// `*this /= rhs`
     APFloat& div(APFloat const& rhs);
     
-    /// \code *this = -*this \endcode
+    /// `*this = -*this`
     APFloat& negate();
     
     /// Set precision to \p precision
     APFloat& setPrecision(APFloatPrec precision);
 
-    /// Compare \p *this and \p rhs
+    /// Compare `*this` and \p rhs
     int cmp(APFloat const& rhs) const;
     
-    /// Returns wether this float is negative.
+    /// Returns wether the value is negative.
     bool negative() const;
     
-    /// The bitwidth of this integer.
+    /// The bitwidth of this value.
     APFloatPrec precision() const { return { _mantWidth, _expWidth }; }
     
-    /// Convert \p *this to a string in the specified base.
+    /// Convert `*this` to a string in the specified base.
     std::string toString() const;
     
     /// Convert to native float type
@@ -113,7 +113,7 @@ public:
         }
     }
     
-    /// Try to convert \p str to \p APFloat
+    /// Try to convert \p str to `APFloat`
     /// \param str All characters except ones representing digits in the specified base, an initial '-' and the first '.' are ignored.
     static std::optional<APFloat> parse(std::string_view str, APFloatPrec precision = APFloatPrec::Double);
     
