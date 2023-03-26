@@ -27,6 +27,8 @@ struct APFloatPrec {
     bool operator==(APFloatPrec const&) const = default;
 };
 
+/// ## Basic operations
+
 /// Compute sum of \p lhs and \p rhs
 APFloat add(APFloat lhs, APFloat const& rhs);
 
@@ -47,6 +49,61 @@ APFloat precisionCast(APFloat operand, APFloatPrec precision);
 
 /// Compare \p lhs and \p rhs
 int cmp(APFloat const& lhs, APFloat const& rhs);
+
+/// ## Common math functions
+
+/// Compute absolute value of \p arg
+APFloat abs(APFloat const& arg);
+
+/// Compute _e_ raised to the power of \p arg
+APFloat exp(APFloat const& arg);
+
+/// Compute 2 raised to the power of \p arg
+APFloat exp2(APFloat const& arg);
+
+/// Compute 10 raised to the power of \p arg
+APFloat exp10(APFloat const& arg);
+
+/// Compute the natural logarithm of \p arg
+APFloat log(APFloat const& arg);
+
+/// Compute the logarithm base 2 of \p arg
+APFloat log2(APFloat const& arg);
+
+/// Compute the logarithm base 10 of \p arg
+APFloat log10(APFloat const& arg);
+
+/// Compute \p base raised to the power of \p exp
+APFloat pow(APFloat const& base, APFloat const& exp);
+
+/// Compute square root of \p arg
+APFloat sqrt(APFloat const& arg);
+
+/// Compute cube root of \p arg
+APFloat cbrt(APFloat const& arg);
+
+/// Compute `hypot` of arguments
+APFloat hypot(APFloat const& a, APFloat const& b);
+
+/// Compute sine of \p arg
+APFloat sin(APFloat const& arg);
+
+/// Compute cosine of \p arg
+APFloat cos(APFloat const& arg);
+
+/// Compute tangent of \p arg
+APFloat tan(APFloat const& arg);
+
+/// Compute arc sine of \p arg
+APFloat asin(APFloat const& arg);
+
+/// Compute arc cosine of \p arg
+APFloat acos(APFloat const& arg);
+
+/// Compute arc tangent of \p arg
+APFloat atan(APFloat const& arg);
+
+/// ## class APFloat
 
 /// Arbitraty precision floating point type.
 /// Mantissa and exponent width is specified on construction and can be modified with `setPrecision()`

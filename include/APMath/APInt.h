@@ -10,6 +10,7 @@
 #include <string_view>
 #include <optional>
 #include <utility>
+#include <concepts>
 
 namespace APMath::internal {
 
@@ -127,6 +128,9 @@ public:
     
     /// Construct an \p APInt with \p bitwidth and set it to \p value
     explicit APInt(std::uint64_t value, std::size_t bitwidth);
+    
+    /// Construct an \p APInt with \p bitwidth and set it to \p value
+    explicit APInt(std::integral auto value, std::size_t bitwidth): APInt(static_cast<uint64_t>(value), bitwidth) {}
     
     /// Construct an \p APInt with \p bitwidth and set its limbs to \p limbs
     explicit APInt(std::initializer_list<Limb> limbs, std::size_t bitwidth):
