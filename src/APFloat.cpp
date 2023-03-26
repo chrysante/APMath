@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <sstream>
+#include <cmath>
 
 using namespace APMath;
 
@@ -27,12 +28,95 @@ APFloat APMath::negate(APFloat operand) {
     return operand.negate();
 }
 
-APFloat precisionCast(APFloat operand, APFloatPrec precision) {
+APFloat APMath::precisionCast(APFloat operand, APFloatPrec precision) {
     return operand.setPrecision(precision);
 }
 
-int cmp(APFloat const& lhs, APFloat const& rhs) {
+int APMath::cmp(APFloat const& lhs, APFloat const& rhs) {
     return lhs.cmp(rhs);
+}
+
+static bool isSinglePrec(auto const& arg, auto const&...) {
+    return arg.precision() == APFloatPrec::Single;
+}
+
+static APFloat elemMathImpl(auto impl, auto const&... args) {
+    if (isSinglePrec(args...)) {
+        return APFloat(impl(args.template to<float>()...), APFloatPrec::Single);
+    }
+    else {
+        return APFloat(impl(args.template to<double>()...), APFloatPrec::Double);
+    }
+}
+
+#define ELEM_MATH_STD_IMPL(name) [](auto... args) { return std::name(args...); }
+
+APFloat APMath::abs(APFloat const& arg) {
+    return elemMathImpl(ELEM_MATH_STD_IMPL(abs), arg);
+}
+
+APFloat APMath::exp(APFloat const& arg) {
+    return elemMathImpl(ELEM_MATH_STD_IMPL(exp), arg);
+}
+
+APFloat APMath::exp2(APFloat const& arg) {
+    return elemMathImpl(ELEM_MATH_STD_IMPL(exp2), arg);
+}
+
+APFloat APMath::exp10(APFloat const& arg) {
+    return elemMathImpl([]<typename T>(T arg) { return std::pow(arg, T(10)); }, arg);
+}
+
+APFloat APMath::log(APFloat const& arg) {
+    return elemMathImpl(ELEM_MATH_STD_IMPL(log), arg);
+}
+
+APFloat APMath::log2(APFloat const& arg) {
+    return elemMathImpl(ELEM_MATH_STD_IMPL(log2), arg);
+}
+
+APFloat APMath::log10(APFloat const& arg) {
+    return elemMathImpl(ELEM_MATH_STD_IMPL(log10), arg);
+}
+
+APFloat APMath::pow(APFloat const& base, APFloat const& exp) {
+    return elemMathImpl(ELEM_MATH_STD_IMPL(pow), base, exp);
+}
+
+APFloat APMath::sqrt(APFloat const& arg) {
+    return elemMathImpl(ELEM_MATH_STD_IMPL(sqrt), arg);
+}
+
+APFloat APMath::cbrt(APFloat const& arg) {
+    return elemMathImpl(ELEM_MATH_STD_IMPL(cbrt), arg);
+}
+
+APFloat APMath::hypot(APFloat const& a, APFloat const& b) {
+    return elemMathImpl(ELEM_MATH_STD_IMPL(hypot), a, b);
+}
+
+APFloat APMath::sin(APFloat const& arg) {
+    return elemMathImpl(ELEM_MATH_STD_IMPL(sin), arg);
+}
+
+APFloat APMath::cos(APFloat const& arg) {
+    return elemMathImpl(ELEM_MATH_STD_IMPL(cos), arg);
+}
+
+APFloat APMath::tan(APFloat const& arg) {
+    return elemMathImpl(ELEM_MATH_STD_IMPL(tan), arg);
+}
+
+APFloat APMath::asin(APFloat const& arg) {
+    return elemMathImpl(ELEM_MATH_STD_IMPL(asin), arg);
+}
+
+APFloat APMath::acos(APFloat const& arg) {
+    return elemMathImpl(ELEM_MATH_STD_IMPL(acos), arg);
+}
+
+APFloat APMath::atan(APFloat const& arg) {
+    return elemMathImpl(ELEM_MATH_STD_IMPL(atan), arg);
 }
 
 APFloatPrec const APFloatPrec::Single = { .mantissaWidth = 23, .exponentWidth = 8 };
