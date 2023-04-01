@@ -1,18 +1,14 @@
 #include <APMath/APFloat.h>
 
 #include <cassert>
-#include <sstream>
 #include <cmath>
+#include <sstream>
 
 using namespace APMath;
 
-APFloat APMath::add(APFloat lhs, APFloat const& rhs) {
-    return lhs.add(rhs);
-}
+APFloat APMath::add(APFloat lhs, APFloat const& rhs) { return lhs.add(rhs); }
 
-APFloat APMath::sub(APFloat lhs, APFloat const& rhs) {
-    return lhs.sub(rhs);
-}
+APFloat APMath::sub(APFloat lhs, APFloat const& rhs) { return lhs.sub(rhs); }
 
 APFloat APMath::mul(APFloat const& lhs, APFloat const& rhs) {
     auto l = lhs;
@@ -24,17 +20,13 @@ APFloat APMath::div(APFloat const& lhs, APFloat const& rhs) {
     return l.div(rhs);
 }
 
-APFloat APMath::negate(APFloat operand) {
-    return operand.negate();
-}
+APFloat APMath::negate(APFloat operand) { return operand.negate(); }
 
 APFloat APMath::precisionCast(APFloat operand, APFloatPrec precision) {
     return operand.setPrecision(precision);
 }
 
-int APMath::cmp(APFloat const& lhs, APFloat const& rhs) {
-    return lhs.cmp(rhs);
-}
+int APMath::cmp(APFloat const& lhs, APFloat const& rhs) { return lhs.cmp(rhs); }
 
 static bool isSinglePrec(auto const& arg, auto const&...) {
     return arg.precision() == APFloatPrec::Single;
@@ -45,7 +37,8 @@ static APFloat elemMathImpl(auto impl, auto const&... args) {
         return APFloat(impl(args.template to<float>()...), APFloatPrec::Single);
     }
     else {
-        return APFloat(impl(args.template to<double>()...), APFloatPrec::Double);
+        return APFloat(impl(args.template to<double>()...),
+                       APFloatPrec::Double);
     }
 }
 
@@ -64,7 +57,8 @@ APFloat APMath::exp2(APFloat const& arg) {
 }
 
 APFloat APMath::exp10(APFloat const& arg) {
-    return elemMathImpl([]<typename T>(T arg) { return std::pow(arg, T(10)); }, arg);
+    return elemMathImpl([]<typename T>(T arg) { return std::pow(arg, T(10)); },
+                        arg);
 }
 
 APFloat APMath::log(APFloat const& arg) {
@@ -119,17 +113,19 @@ APFloat APMath::atan(APFloat const& arg) {
     return elemMathImpl(ELEM_MATH_STD_IMPL(atan), arg);
 }
 
-APFloatPrec const APFloatPrec::Single = { .mantissaWidth = 23, .exponentWidth = 8 };
+APFloatPrec const APFloatPrec::Single = { .mantissaWidth = 23,
+                                          .exponentWidth = 8 };
 
-APFloatPrec const APFloatPrec::Double = { .mantissaWidth = 52, .exponentWidth = 11 };
+APFloatPrec const APFloatPrec::Double = { .mantissaWidth = 52,
+                                          .exponentWidth = 11 };
 
 APFloat::APFloat(APFloatPrec precision): APFloat(0.0, precision) {}
 
 APFloat::APFloat(long double value, APFloatPrec precision):
     _mantWidth(static_cast<uint32_t>(precision.mantissaWidth)),
-    _expWidth(static_cast<uint32_t>(precision.exponentWidth))
-{
-    assert(precision == APFloatPrec::Single || precision == APFloatPrec::Double);
+    _expWidth(static_cast<uint32_t>(precision.exponentWidth)) {
+    assert(precision == APFloatPrec::Single ||
+           precision == APFloatPrec::Double);
     if (isSingle()) {
         _f32 = static_cast<float>(value);
     }
@@ -150,8 +146,8 @@ APFloat::~APFloat() = default;
 
 void APFloat::swap(APFloat& rhs) noexcept {
     auto tmp = *this;
-    *this = rhs;
-    rhs = tmp;
+    *this    = rhs;
+    rhs      = tmp;
 }
 
 APFloat& APFloat::add(APFloat const& rhs) {
@@ -210,7 +206,7 @@ APFloat& APFloat::negate() {
 
 APFloat& APFloat::setPrecision(APFloatPrec precision) {
     _mantWidth = static_cast<uint32_t>(precision.mantissaWidth);
-    _expWidth = static_cast<uint32_t>(precision.exponentWidth);
+    _expWidth  = static_cast<uint32_t>(precision.exponentWidth);
     return *this;
 }
 
@@ -248,8 +244,9 @@ std::string APFloat::toString() const {
     return std::move(sstr).str();
 }
 
-std::optional<APFloat> APFloat::parse(std::string_view str, APFloatPrec precision) {
-    char* ptr = nullptr;
+std::optional<APFloat> APFloat::parse(std::string_view str,
+                                      APFloatPrec precision) {
+    char* ptr  = nullptr;
     double res = std::strtod(str.data(), &ptr);
     if (ptr == str.data()) {
         return std::nullopt;

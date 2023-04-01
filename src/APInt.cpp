@@ -1,10 +1,10 @@
 #include <APMath/APInt.h>
 
+#include <algorithm>
+#include <array>
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
-#include <algorithm>
-#include <array>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -13,31 +13,27 @@ using namespace APMath;
 using namespace APMath::internal;
 
 using std::size_t;
-using std::uint8_t;
 using std::uint16_t;
 using std::uint32_t;
 using std::uint64_t;
+using std::uint8_t;
 
-APInt APMath::add(APInt lhs, APInt const& rhs) {
-    return lhs.add(rhs);
-}
+APInt APMath::add(APInt lhs, APInt const& rhs) { return lhs.add(rhs); }
 
-APInt APMath::sub(APInt lhs, APInt const& rhs) {
-    return lhs.sub(rhs);
-}
+APInt APMath::sub(APInt lhs, APInt const& rhs) { return lhs.sub(rhs); }
 
 static APInt::Limb mulCarry(APInt::Limb a, APInt::Limb b) {
     static_assert(sizeof(APInt::Limb) == 8, "Only works for 64 bit integers");
     constexpr uint64_t mask = 0xFFFF'FFFF;
-    uint64_t const a0 = a & mask;
-    uint64_t const a1 = a >> 32;
-    uint64_t const b0 = b & mask;
-    uint64_t const b1 = b >> 32;
-    uint64_t const d0 = a1 * b0 + (a0 * b0 >> 32);
-    uint64_t const d1 = a0 * b1;
-    uint64_t const c1 = d0 + d1;
-    uint64_t const c2 = (c1 >> 32) + (c1 < d0 ? 0x100000000u : 0);
-    uint64_t const carry = a1 * b1 + c2;
+    uint64_t const a0       = a & mask;
+    uint64_t const a1       = a >> 32;
+    uint64_t const b0       = b & mask;
+    uint64_t const b1       = b >> 32;
+    uint64_t const d0       = a1 * b0 + (a0 * b0 >> 32);
+    uint64_t const d1       = a0 * b1;
+    uint64_t const c1       = d0 + d1;
+    uint64_t const c2       = (c1 >> 32) + (c1 < d0 ? 0x100000000u : 0);
+    uint64_t const carry    = a1 * b1 + c2;
     return carry;
 }
 
@@ -48,11 +44,11 @@ APInt APMath::mul(APInt const& lhs, APInt const& rhs) {
     APInt term(lhs.bitwidth());
     Limb* t = term.limbPtr();
     APInt res(lhs.bitwidth());
-    for (size_t j = lhs.numLimbs(); j > 0; ) {
+    for (size_t j = lhs.numLimbs(); j > 0;) {
         std::memset(t, 0, lhs.byteSize());
         --j;
         Limb const factor = r[j];
-        Limb carry = 0;
+        Limb carry        = 0;
         for (size_t i = 0, k = j; k < lhs.numLimbs(); ++i, ++k) {
             Limb newCarry = mulCarry(l[i], factor);
             assert(newCarry != limbMax);
@@ -68,14 +64,14 @@ APInt APMath::mul(APInt const& lhs, APInt const& rhs) {
 
 std::pair<APInt, APInt> APMath::udivrem(APInt const& numerator,
                                         APInt const& denominator) {
-    using Limb = APInt::Limb;
+    using Limb                   = APInt::Limb;
     constexpr size_t limbBitSize = sizeof(Limb) * CHAR_BIT;
     assert(numerator.bitwidth() == denominator.bitwidth());
     assert(denominator.ucmp(0) != 0);
     APInt quotient(0, numerator.bitwidth());
     APInt remainder(0, numerator.bitwidth());
-    Limb* const q = quotient.limbPtr();
-    Limb* const r = remainder.limbPtr();
+    Limb* const q       = quotient.limbPtr();
+    Limb* const r       = remainder.limbPtr();
     Limb const* const n = numerator.limbPtr();
     for (size_t i = numerator.bitwidth(); i > 0;) {
         --i;
@@ -118,49 +114,27 @@ APInt APMath::srem(APInt const& lhs, APInt const& rhs) {
     return sdivrem(lhs, rhs).second;
 }
 
-APInt APMath::btwand(APInt lhs, APInt const& rhs) {
-    return lhs.btwand(rhs);
-}
+APInt APMath::btwand(APInt lhs, APInt const& rhs) { return lhs.btwand(rhs); }
 
-APInt APMath::btwor(APInt lhs, APInt const& rhs) {
-    return lhs.btwor(rhs);
-}
+APInt APMath::btwor(APInt lhs, APInt const& rhs) { return lhs.btwor(rhs); }
 
-APInt APMath::btwxor(APInt lhs, APInt const& rhs) {
-    return lhs.btwxor(rhs);
-}
+APInt APMath::btwxor(APInt lhs, APInt const& rhs) { return lhs.btwxor(rhs); }
 
-APInt APMath::lshl(APInt operand, int numBits) {
-    return operand.lshl(numBits);
-}
+APInt APMath::lshl(APInt operand, int numBits) { return operand.lshl(numBits); }
 
-APInt APMath::lshr(APInt operand, int numBits) {
-    return operand.lshr(numBits);
-}
+APInt APMath::lshr(APInt operand, int numBits) { return operand.lshr(numBits); }
 
-APInt APMath::ashl(APInt operand, int numBits) {
-    return operand.ashl(numBits);
-}
+APInt APMath::ashl(APInt operand, int numBits) { return operand.ashl(numBits); }
 
-APInt APMath::ashr(APInt operand, int numBits) {
-    return operand.ashr(numBits);
-}
+APInt APMath::ashr(APInt operand, int numBits) { return operand.ashr(numBits); }
 
-APInt APMath::rotl(APInt operand, int numBits) {
-    return operand.rotl(numBits);
-}
+APInt APMath::rotl(APInt operand, int numBits) { return operand.rotl(numBits); }
 
-APInt APMath::rotr(APInt operand, int numBits) {
-    return operand.rotr(numBits);
-}
+APInt APMath::rotr(APInt operand, int numBits) { return operand.rotr(numBits); }
 
-APInt APMath::negate(APInt operand) {
-    return operand.negate();
-}
+APInt APMath::negate(APInt operand) { return operand.negate(); }
 
-APInt APMath::btwnot(APInt operand) {
-    return operand.btwnot();
-}
+APInt APMath::btwnot(APInt operand) { return operand.btwnot(); }
 
 APInt APMath::zext(APInt operand, std::size_t bitwidth) {
     return operand.zext(bitwidth);
@@ -170,29 +144,20 @@ APInt APMath::sext(APInt operand, std::size_t bitwidth) {
     return operand.sext(bitwidth);
 }
 
-int APMath::ucmp(APInt const& lhs, APInt const& rhs) {
-    return lhs.ucmp(rhs);
-}
+int APMath::ucmp(APInt const& lhs, APInt const& rhs) { return lhs.ucmp(rhs); }
 
-int APMath::ucmp(APInt const& lhs, std::uint64_t rhs) {
-    return lhs.ucmp(rhs);
-}
+int APMath::ucmp(APInt const& lhs, std::uint64_t rhs) { return lhs.ucmp(rhs); }
 
-int APMath::ucmp(std::uint64_t lhs, APInt const& rhs) {
-    return -rhs.ucmp(lhs);
-}
+int APMath::ucmp(std::uint64_t lhs, APInt const& rhs) { return -rhs.ucmp(lhs); }
 
-int APMath::scmp(APInt const& lhs, APInt const& rhs) {
-    return lhs.scmp(rhs);
-}
+int APMath::scmp(APInt const& lhs, APInt const& rhs) { return lhs.scmp(rhs); }
 
 APInt::APInt(size_t bitwidth): APInt(0, bitwidth) {}
 
 APInt::APInt(uint64_t value, size_t bw):
     _bitwidth(static_cast<uint32_t>(bw)),
-    topLimbActiveBits(static_cast<uint32_t>(ceilRem(bitwidth(),
-                                                    limbSize * CHAR_BIT)))
-{
+    topLimbActiveBits(
+        static_cast<uint32_t>(ceilRem(bitwidth(), limbSize * CHAR_BIT))) {
     assert(bw > 0);
     assert(bw <= maxBitwidth());
     if (isLocal()) {
@@ -213,9 +178,7 @@ APInt::APInt(std::span<Limb const> limbs, size_t bitwidth): APInt(bitwidth) {
 }
 
 APInt::APInt(APInt const& rhs):
-    _bitwidth(rhs._bitwidth),
-    topLimbActiveBits(rhs.topLimbActiveBits)
-{
+    _bitwidth(rhs._bitwidth), topLimbActiveBits(rhs.topLimbActiveBits) {
     if (isLocal()) {
         singleLimb = rhs.singleLimb;
     }
@@ -226,25 +189,23 @@ APInt::APInt(APInt const& rhs):
 }
 
 APInt::APInt(APInt&& rhs) noexcept:
-    _bitwidth(rhs._bitwidth),
-    topLimbActiveBits(rhs.topLimbActiveBits)
-{
+    _bitwidth(rhs._bitwidth), topLimbActiveBits(rhs.topLimbActiveBits) {
     if (isLocal()) {
         singleLimb = rhs.singleLimb;
     }
     else {
-        heapLimbs = rhs.heapLimbs;
-        rhs._bitwidth = 0;
+        heapLimbs             = rhs.heapLimbs;
+        rhs._bitwidth         = 0;
         rhs.topLimbActiveBits = 0;
-        rhs.heapLimbs = nullptr;
+        rhs.heapLimbs         = nullptr;
     }
 }
 
 APInt& APInt::operator=(APInt const& rhs) {
-    bool thisIsLocal = isLocal();
+    bool thisIsLocal    = isLocal();
     size_t thisNumLimbs = numLimbs();
-    _bitwidth = rhs._bitwidth;
-    topLimbActiveBits = rhs.topLimbActiveBits;
+    _bitwidth           = rhs._bitwidth;
+    topLimbActiveBits   = rhs.topLimbActiveBits;
     if (thisIsLocal) {
         if (rhs.isLocal()) {
             singleLimb = rhs.singleLimb;
@@ -272,20 +233,20 @@ APInt& APInt::operator=(APInt const& rhs) {
 }
 
 APInt& APInt::operator=(APInt&& rhs) noexcept {
-    bool thisIsLocal = isLocal();
+    bool thisIsLocal    = isLocal();
     size_t thisNumLimbs = numLimbs();
-    _bitwidth = rhs._bitwidth;
-    topLimbActiveBits = rhs.topLimbActiveBits;
+    _bitwidth           = rhs._bitwidth;
+    topLimbActiveBits   = rhs.topLimbActiveBits;
     if (thisIsLocal) {
         if (rhs.isLocal()) {
             singleLimb = rhs.singleLimb;
         }
         else {
-            /// We steal rhs's buffer
-            heapLimbs = rhs.heapLimbs;
-            rhs._bitwidth = 0;
+            /// We steal `rhs`'s buffer
+            heapLimbs             = rhs.heapLimbs;
+            rhs._bitwidth         = 0;
             rhs.topLimbActiveBits = 0;
-            rhs.heapLimbs = nullptr;
+            rhs.heapLimbs         = nullptr;
         }
     }
     else {
@@ -322,8 +283,8 @@ void APInt::swap(APInt& rhs) noexcept {
 
 APInt& APInt::add(APInt const& rhs) {
     assert(bitwidth() == rhs.bitwidth());
-    Limb carry = 0;
-    Limb* l = limbPtr();
+    Limb carry    = 0;
+    Limb* l       = limbPtr();
     Limb const* r = rhs.limbPtr();
     for (size_t i = 0; i < numLimbs(); ++i) {
         Limb const newCarry =
@@ -336,8 +297,8 @@ APInt& APInt::add(APInt const& rhs) {
 }
 
 APInt& APInt::sub(APInt const& rhs) {
-    Limb carry = 0;
-    Limb* l = limbPtr();
+    Limb carry    = 0;
+    Limb* l       = limbPtr();
     Limb const* r = rhs.limbPtr();
     for (size_t i = 0; i < numLimbs(); ++i) {
         Limb const newCarry = l[i] < r[i] || l[i] < r[i] + carry;
@@ -348,9 +309,7 @@ APInt& APInt::sub(APInt const& rhs) {
     return *this;
 }
 
-APInt& APInt::mul(APInt const& rhs) {
-    return *this = APMath::mul(*this, rhs);
-}
+APInt& APInt::mul(APInt const& rhs) { return *this = APMath::mul(*this, rhs); }
 
 APInt& APInt::udiv(APInt const& rhs) {
     return *this = APMath::udiv(*this, rhs);
@@ -370,7 +329,7 @@ APInt& APInt::srem(APInt const& rhs) {
 
 APInt& APInt::btwand(APInt const& rhs) {
     assert(bitwidth() == rhs.bitwidth());
-    Limb* const l = limbPtr();
+    Limb* const l       = limbPtr();
     Limb const* const r = rhs.limbPtr();
     for (size_t i = 0; i < numLimbs(); ++i) {
         l[i] &= r[i];
@@ -380,7 +339,7 @@ APInt& APInt::btwand(APInt const& rhs) {
 
 APInt& APInt::btwor(APInt const& rhs) {
     assert(bitwidth() == rhs.bitwidth());
-    Limb* const l = limbPtr();
+    Limb* const l       = limbPtr();
     Limb const* const r = rhs.limbPtr();
     for (size_t i = 0; i < numLimbs(); ++i) {
         l[i] |= r[i];
@@ -390,7 +349,7 @@ APInt& APInt::btwor(APInt const& rhs) {
 
 APInt& APInt::btwxor(APInt const& rhs) {
     assert(bitwidth() == rhs.bitwidth());
-    Limb* const l = limbPtr();
+    Limb* const l       = limbPtr();
     Limb const* const r = rhs.limbPtr();
     for (size_t i = 0; i < numLimbs(); ++i) {
         l[i] ^= r[i];
@@ -401,7 +360,7 @@ APInt& APInt::btwxor(APInt const& rhs) {
 
 static void lshlShort(APInt::Limb* l, size_t numLimbs, size_t bitOffset) {
     assert(bitOffset < limbBitSize);
-    Limb carry = 0;
+    Limb carry                    = 0;
     size_t const rightShiftAmount = limbBitSize - bitOffset;
     for (size_t i = 0; i < numLimbs; ++i) {
         Limb const newCarry =
@@ -415,10 +374,10 @@ static void lshlShort(APInt::Limb* l, size_t numLimbs, size_t bitOffset) {
 APInt& APInt::lshl(int nb) {
     assert(nb >= 0);
     assert(nb < _bitwidth);
-    size_t const numBits = static_cast<size_t>(nb);
-    size_t const bitOffset = numBits % limbBitSize;
+    size_t const numBits    = static_cast<size_t>(nb);
+    size_t const bitOffset  = numBits % limbBitSize;
     size_t const limbOffset = numBits / limbBitSize;
-    Limb* l = limbPtr();
+    Limb* l                 = limbPtr();
     if (numBits < limbBitSize) {
         lshlShort(l, numLimbs(), bitOffset);
     }
@@ -440,10 +399,10 @@ APInt& APInt::lshl(int nb) {
 }
 
 static void lshrShort(APInt::Limb* l, size_t numLimbs, size_t bitOffset) {
-    using Limb = APInt::Limb;
+    using Limb                   = APInt::Limb;
     constexpr size_t limbBitSize = sizeof(Limb) * CHAR_BIT;
     assert(bitOffset < limbBitSize);
-    Limb carry = 0;
+    Limb carry                   = 0;
     size_t const leftShiftAmount = limbBitSize - bitOffset;
     for (size_t i = numLimbs; i > 0;) {
         --i;
@@ -458,10 +417,10 @@ static void lshrShort(APInt::Limb* l, size_t numLimbs, size_t bitOffset) {
 APInt& APInt::lshr(int nb) {
     assert(nb >= 0);
     assert(nb < _bitwidth);
-    size_t const numBits = static_cast<size_t>(nb);
-    size_t const bitOffset = numBits % limbBitSize;
+    size_t const numBits    = static_cast<size_t>(nb);
+    size_t const bitOffset  = numBits % limbBitSize;
     size_t const limbOffset = numBits / limbBitSize;
-    Limb* l = limbPtr();
+    Limb* l                 = limbPtr();
     if (numBits < limbBitSize) {
         lshrShort(l, numLimbs(), bitOffset);
     }
@@ -479,9 +438,7 @@ APInt& APInt::lshr(int nb) {
     return *this;
 }
 
-APInt& APInt::ashl(int numBits) {
-    return lshl(numBits);
-}
+APInt& APInt::ashl(int numBits) { return lshl(numBits); }
 
 APInt& APInt::ashr(int nb) {
     assert(nb >= 0);
@@ -492,15 +449,15 @@ APInt& APInt::ashr(int nb) {
     if (h == 0) {
         return *this;
     }
-    Limb* const l = limbPtr();
+    Limb* const l        = limbPtr();
     size_t const loopEnd = ceilDiv(bitwidth() - numBits, limbBitSize);
-    for (size_t i = numLimbs(); i > loopEnd; ) {
+    for (size_t i = numLimbs(); i > loopEnd;) {
         --i;
         l[i] = Limb(-1);
     }
     if (topLimbActiveBits < numBits) {
-        l[loopEnd - 1] |=
-            Limb(-1) << (limbBitSize - (numBits - topLimbActiveBits));
+        l[loopEnd - 1] |= Limb(-1)
+                          << (limbBitSize - (numBits - topLimbActiveBits));
     }
     else if (topLimbActiveBits == numBits) {
         l[loopEnd - 1] |= Limb(-1);
@@ -524,11 +481,11 @@ APInt& APInt::rotr(int numBits) {
 
 APInt& APInt::negate() {
     Limb carry = 0;
-    Limb* l = limbPtr();
+    Limb* l    = limbPtr();
     for (size_t i = 0; i < numLimbs(); ++i) {
         Limb const newCarry = l[i] > 0 || l[i] + carry > 0;
-        l[i] = -l[i] - carry;
-        carry = newCarry;
+        l[i]                = -l[i] - carry;
+        carry               = newCarry;
     }
     l[numLimbs() - 1] &= topLimbMask();
     return *this;
@@ -548,9 +505,9 @@ APInt& APInt::zext(size_t bitwidth) {
 }
 
 APInt& APInt::sext(size_t bitwidth) {
-    int const h = highbit();
-    size_t const oldWidth = this->bitwidth();
-    Limb const oldTopMask = topLimbMask();
+    int const h              = highbit();
+    size_t const oldWidth    = this->bitwidth();
+    Limb const oldTopMask    = topLimbMask();
     size_t const oldnumLimbs = numLimbs();
     zext(bitwidth);
     if (oldWidth >= bitwidth || h == 0) {
@@ -577,19 +534,19 @@ int APInt::scmp(APInt const& rhs) const {
     }
 }
 
-bool APInt::negative() const {
-    return highbit() != 0;
-}
+bool APInt::negative() const { return highbit() != 0; }
 
 static int ucmpImpl(APInt::Limb const* lhs,
                     size_t lhsNumLimbs,
                     APInt::Limb const* rhs,
                     size_t rhsNumLimbs) {
     if (lhsNumLimbs != rhsNumLimbs) {
-        /// If one is bigger than the other, we need to test the top limbs separately.
-        auto const [bigPtr, bigSize, smallPtr, smallSize] = lhsNumLimbs > rhsNumLimbs ?
-            std::tuple{ lhs, lhsNumLimbs, rhs, rhsNumLimbs } :
-            std::tuple{ rhs, rhsNumLimbs, lhs, lhsNumLimbs };
+        /// If one is bigger than the other, we need to test the top limbs
+        /// separately.
+        auto const [bigPtr, bigSize, smallPtr, smallSize] =
+            lhsNumLimbs > rhsNumLimbs ?
+                std::tuple{ lhs, lhsNumLimbs, rhs, rhsNumLimbs } :
+                std::tuple{ rhs, rhsNumLimbs, lhs, lhsNumLimbs };
         for (size_t i = smallSize; i != bigSize; ++i) {
             if (bigPtr[i] != 0) {
                 return bigPtr == lhs ? 1 : -1;
@@ -628,11 +585,9 @@ static char intToSymbol(Limb l) {
     return static_cast<char>('A' + static_cast<int>(l) - 10);
 }
 
-std::string APInt::toString(int b) const& {
-    return APInt(*this).toString(b);
-}
+std::string APInt::toString(int b) const& { return APInt(*this).toString(b); }
 
-std::string APInt::toString(int b)&& {
+std::string APInt::toString(int b) && {
     assert(b >= 2);
     assert(b <= 36);
     zext(std::max<size_t>(8, bitwidth()));
@@ -673,11 +628,11 @@ static char charDigitToInt(char d) {
 
 static void div2(std::vector<char>& str, int base) {
     int const halfBase = base / 2;
-    int nextAdditive = 0;
+    int nextAdditive   = 0;
     for (char& d: str) {
         int const additive = nextAdditive;
-        nextAdditive = d % 2 ? halfBase : 0;
-        d = static_cast<char>(d / 2 + additive);
+        nextAdditive       = d % 2 ? halfBase : 0;
+        d                  = static_cast<char>(d / 2 + additive);
     }
     if (str.size() > 1 && str[0] == 0) {
         str.erase(str.begin());
@@ -714,13 +669,16 @@ static int extractSign(std::string_view s, int base) {
     return 0;
 }
 
-std::optional<APInt> APInt::parse(std::string_view s, int base) {
+std::optional<APInt> APInt::parse(std::string_view s,
+                                  int base,
+                                  size_t targetBW) {
     assert(base >= 2);
     assert(base <= 36);
     int sign = extractSign(s, base);
     if (sign == 0) {
         return std::nullopt;
     }
+    assert(sign == 1 || sign == -1);
     std::vector<char> str;
     str.reserve(s.size());
     for (auto c: s) {
@@ -728,23 +686,36 @@ std::optional<APInt> APInt::parse(std::string_view s, int base) {
             str.push_back(charDigitToInt(c));
         }
     }
-    size_t bitwidth = 0;
-    APInt res(limbBitSize);
+    size_t requiredBW = 0;
+    APInt res(targetBW == 0 ? limbBitSize : targetBW);
     Limb* l = res.limbPtr();
     while (str.size() > 1 || str[0] != 0) {
-        ++bitwidth;
-        if (bitwidth > res.bitwidth()) {
-            res.zext(2 * res.bitwidth());
-            l = res.limbPtr();
+        ++requiredBW;
+        if (requiredBW > res.bitwidth()) {
+            if (targetBW == 0) {
+                res.zext(2 * res.bitwidth());
+                l = res.limbPtr();
+            }
+            else {
+                return std::nullopt;
+            }
         }
-        l[(bitwidth - 1) / limbBitSize] |=
-            Limb(str.back() % 2) << ((bitwidth - 1) % limbBitSize);
+        l[(requiredBW - 1) / limbBitSize] |=
+            Limb(str.back() % 2) << ((requiredBW - 1) % limbBitSize);
         div2(str, base);
     }
     if (res.ucmp(0) == 0) {
         sign = 1;
     }
-    res.zext(std::max(size_t(1), bitwidth + (sign == -1)));
+    if (targetBW == 0) {
+        res.zext(std::max(size_t(1), requiredBW + (sign == -1)));
+    }
+    else if (sign == -1 && res.highbit()) {
+        /// We are negative, have fixed requested bitwidth and highbit is
+        /// already set. Negating would yield a positive integer, so number does
+        /// not fit.
+        return std::nullopt;
+    }
     if (sign == -1) {
         res.negate();
     }
@@ -769,6 +740,4 @@ APInt::Limb* APInt::allocate(size_t numLimbs) {
     return static_cast<Limb*>(std::malloc(numLimbs * limbSize));
 }
 
-void APInt::deallocate(Limb* ptr, size_t numLimbs) {
-    std::free(ptr);
-}
+void APInt::deallocate(Limb* ptr, size_t numLimbs) { std::free(ptr); }
