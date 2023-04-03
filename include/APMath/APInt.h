@@ -2,7 +2,6 @@
 #define APMATH_APINT_H_
 
 #include <climits>
-#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <initializer_list>
@@ -254,29 +253,27 @@ public:
     std::span<Limb const> limbs() const { return { limbPtr(), numLimbs() }; }
 
     /// Convert to native integral type
+    /// Truncates if `*this` is wider than `T`.
     template <typename T>
-    T to() const {
-        static_assert(std::is_arithmetic_v<T>);
-        assert(bitwidth() <= sizeof(T) * CHAR_BIT);
-        return static_cast<T>(limbPtr()[0]);
-    }
+    typename std::enable_if<std::is_integral<T>::value, T>::type to() const;
 
-    /// Compute a 64 bit of of this integer.
-    /// Note that this is not a cryptographic hash.
+    /// Compute a 64 bit hash of this integer.
+    ///
+    /// Note that this is meant for use with unordered containers and is not a cryptographic hash.
     std::size_t hash() const;
 
     /// Try to convert \p str to `APInt`
     ///
     /// \param str All characters except ones representing digits in the
-    /// specified base and an initial '-' are ignored. Result is exactly as wide
-    /// as necessary to represent the parsed integer.
+    /// specified base and an initial '-' are ignored.
     ///
     /// \param base The base the number is represented in. Must be between 0 and
     /// 36 (inclusive)
     ///
     /// \param bitwidth The desired bitwidth of the result. A value of zero
     /// means the result will be exactly as wide as required to represent the
-    /// number.
+    /// number. If a non-zero bitwidth is specified and the number does not fit,
+    /// `std::nullopt` is returned.
     static std::optional<APInt> parse(std::string_view str,
                                       int base        = 10,
                                       size_t bitwidth = 0);
@@ -332,6 +329,16 @@ private:
 };
 
 } // namespace APMath
+
+template <typename T>
+typename std::enable_if<std::is_integral<T>::value, T>::type
+    APMath::APInt::to() const {
+    T result;
+    std::size_t const numBytes = std::min(numLimbs() * sizeof(Limb),
+                                          sizeof(T));
+    std::memcpy(&result, limbPtr(), numBytes);
+    return result;
+}
 
 inline std::size_t APMath::internal::ceilDiv(std::size_t a, std::size_t b) {
     return a / b + !!(a % b);

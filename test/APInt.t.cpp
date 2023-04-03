@@ -405,3 +405,19 @@ TEST_CASE("String parse - 2") {
     auto b = APInt::parse("-127", 10, 8).value();
     CHECK(b == 129); // 129 == -127 in 8 bit two's complement
 }
+
+TEST_CASE("Conversion to native") {
+    APInt a(-123, 32);
+    CHECK(a.to<int32_t>() == -123);
+    APInt b(1024 + 255, 8);
+    CHECK(b.to<int32_t>() == 255);
+    APInt c = APInt::parse("1 0000 0000 0000 0123", 16, 128).value();
+    CHECK(c.to<int64_t>() == 0x123);
+#ifdef __SIZEOF_INT128__
+    CHECK(c.to<__uint128_t>() - 0x124 == ~uint64_t(0));
+#endif
+    APInt d(0x1'0000'0123, 64);
+    CHECK(d.to<int32_t>() == 0x123);
+    APInt e(0x1'0000'0123, 32);
+    CHECK(e.to<int64_t>() == 0x123);
+}
