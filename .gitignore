@@ -2,6 +2,9 @@ build/
 **.xcodeproj
 **.xcworkspace
 
+Makefile
+**.make
+
 **/.DS_Store
 
 .vs/
