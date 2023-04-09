@@ -17,7 +17,8 @@ namespace APMath {
 class APInt;
 class APFloat;
 
-/// Convert value \p from to the value of type `To` with the same bit representation as \p from
+/// Convert value \p from to the value of type `To` with the same bit
+/// representation as \p from
 template <typename To, typename From>
 To bitcast(From const& from); // Undefined
 

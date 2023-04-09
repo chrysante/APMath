@@ -1,10 +1,10 @@
 #include <APMath/Conversion.h>
 
-#include <cassert>
 #include <bit>
+#include <cassert>
 
-#include <APMath/APInt.h>
 #include <APMath/APFloat.h>
+#include <APMath/APInt.h>
 
 using namespace APMath;
 
@@ -23,9 +23,11 @@ APFloat APMath::bitcast(APInt const& from) {
     assert((from.bitwidth() == 32 || from.bitwidth() == 64) &&
            "Other sizes are not supported by APFloat");
     if (from.bitwidth() == 32) {
-        return APFloat(std::bit_cast<float>(from.to<uint32_t>()), APFloatPrec::Single);
+        return APFloat(std::bit_cast<float>(from.to<uint32_t>()),
+                       APFloatPrec::Single);
     }
     else {
-        return APFloat(std::bit_cast<double>(from.to<uint64_t>()), APFloatPrec::Double);
+        return APFloat(std::bit_cast<double>(from.to<uint64_t>()),
+                       APFloatPrec::Double);
     }
 }
