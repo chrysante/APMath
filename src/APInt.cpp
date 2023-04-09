@@ -134,7 +134,7 @@ APInt APMath::rotr(APInt operand, int numBits) { return operand.rotr(numBits); }
 
 APInt APMath::negate(APInt operand) { return operand.negate(); }
 
-APInt APMath::btwnot(APInt operand) { return operand.btwnot(); }
+APInt APMath::btwnot(APInt operand) { return operand.flip(); }
 
 APInt APMath::zext(APInt operand, std::size_t bitwidth) {
     return operand.zext(bitwidth);
@@ -491,13 +491,153 @@ APInt& APInt::negate() {
     return *this;
 }
 
-APInt& APInt::btwnot() {
+APInt& APInt::set(size_t n, bool value) {
+    if (value) {
+        set(n);
+    }
+    else {
+        clear(n);
+    }
+    return *this;
+}
+
+APInt& APInt::set(size_t n) {
+    limbPtr()[n / limbBitSize] |= Limb(1) << (n % limbBitSize);
+    return *this;
+}
+
+APInt& APInt::clear(size_t n) {
+    limbPtr()[n / limbBitSize] &= ~(Limb(1) << (n % limbBitSize));
+    return *this;
+}
+
+APInt& APInt::flip(size_t n) {
+    limbPtr()[n / limbBitSize] ^= Limb(1) << (n % limbBitSize);
+    return *this;
+}
+
+APInt& APInt::flip() {
     Limb* const l = limbPtr();
     for (size_t i = 0; i < numLimbs(); ++i) {
         l[i] = ~l[i];
     }
     l[numLimbs() - 1] &= topLimbMask();
     return *this;
+}
+
+bool APInt::test(size_t n) const {
+    return limbPtr()[n / limbBitSize] & (Limb(1) << (n % limbBitSize));
+}
+
+bool APInt::all() const {
+    size_t const end = numLimbs() - 1;
+    for (size_t i = 0; i < end; ++i) {
+        if (limbPtr()[i] != ~Limb(0)) {
+            return false;
+        }
+    }
+    if (limbPtr()[end] != topLimbMask()) {
+        return false;
+    }
+    return true;
+}
+
+bool APInt::any() const { return !none(); }
+
+bool APInt::none() const {
+    for (size_t i = 0, end = numLimbs(); i < end; ++i) {
+        if (limbPtr()[i] != 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+#if defined(__GCC__) || defined(__clang__)
+
+[[maybe_unused]] static size_t builtinPopcount(unsigned x) {
+    return static_cast<size_t>(__builtin_popcount(x));
+}
+
+[[maybe_unused]] static size_t builtinPopcount(unsigned long x) {
+    return static_cast<size_t>(__builtin_popcountl(x));
+}
+
+[[maybe_unused]] static size_t builtinPopcount(unsigned long long x) {
+    return static_cast<size_t>(__builtin_popcountll(x));
+}
+
+[[maybe_unused]] static size_t builtinCLZ(unsigned x) {
+    return static_cast<size_t>(__builtin_clz(x));
+}
+
+[[maybe_unused]] static size_t builtinCLZ(unsigned long x) {
+    return static_cast<size_t>(__builtin_clzl(x));
+}
+
+[[maybe_unused]] static size_t builtinCLZ(unsigned long long x) {
+    return static_cast<size_t>(__builtin_clzll(x));
+}
+
+[[maybe_unused]] static size_t builtinCTZ(unsigned x) {
+    return static_cast<size_t>(__builtin_ctz(x));
+}
+
+[[maybe_unused]] static size_t builtinCTZ(unsigned long x) {
+    return static_cast<size_t>(__builtin_ctzl(x));
+}
+
+[[maybe_unused]] static size_t builtinCTZ(unsigned long long x) {
+    return static_cast<size_t>(__builtin_ctzll(x));
+}
+
+#else
+#error Unknown compiler
+#endif
+
+size_t APInt::popcount() const {
+    size_t result = 0;
+    for (size_t i = 0, end = numLimbs(); i < end; ++i) {
+        result += builtinPopcount(limbPtr()[i]);
+    }
+    return result;
+}
+
+size_t APInt::clz() const {
+    auto* const l = limbPtr();
+    size_t i      = numLimbs() - 1;
+    size_t result = 0;
+    if (auto const limb = l[i]; limb != 0) {
+        return builtinCLZ(limb) - (limbBitSize - topLimbActiveBits);
+    }
+    result += topLimbActiveBits;
+    for (; i != 0; ) {
+        --i;
+        auto const limb = l[i];
+        if (limb != 0) {
+            return result + builtinCLZ(limb);
+        }
+        result += limbBitSize;
+    }
+    return result;
+}
+
+size_t APInt::ctz() const {
+    size_t const end = numLimbs() - 1;
+    auto* const l    = limbPtr();
+    size_t result    = 0;
+    for (size_t i = 0; i < end; ++i) {
+        auto const limb = l[i];
+        if (limb != 0) {
+            return result + builtinCTZ(limb);
+        }
+        result += limbBitSize;
+    }
+    auto const limb = l[end];
+    if (limb != 0) {
+        return result + builtinCTZ(limb);
+    }
+    return result + topLimbActiveBits;
 }
 
 APInt& APInt::zext(size_t bitwidth) {

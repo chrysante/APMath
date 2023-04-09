@@ -205,8 +205,41 @@ public:
     /// Compute and assign arithmetic signed complement of `*this`
     APInt& negate();
 
-    /// Compute and assign bitwise complement of `*this`
-    APInt& btwnot();
+    /// Set the \p n th bit to \p value
+    APInt& set(size_t n, bool value);
+
+    /// Set the \p n th bit to `true`.
+    APInt& set(size_t n);
+
+    /// Set the \p n th bit to `false`.
+    APInt& clear(size_t n);
+
+    /// Flip the \p n th bit.
+    APInt& flip(size_t n);
+
+    /// Flip all bits.
+    APInt& flip();
+
+    /// Test the \p n th bit.
+    bool test(size_t n) const;
+
+    /// Test if all bits are set.
+    bool all() const;
+
+    /// Test if any bit is set.
+    bool any() const;
+
+    /// Test if no bits are set.
+    bool none() const;
+
+    /// Number of bits set.
+    size_t popcount() const;
+
+    /// Number of leading zeros, starting at the most significant bit position.
+    size_t clz() const;
+
+    /// Number of trailing zeros, starting at the least significant bit position
+    size_t ctz() const;
 
     /// Perform zero extend to \p bitwidth
     /// If \p bitwidth is less than current bitwidth, `*this` will be shrunk.
@@ -259,7 +292,8 @@ public:
 
     /// Compute a 64 bit hash of this integer.
     ///
-    /// Note that this is meant for use with unordered containers and is not a cryptographic hash.
+    /// Note that this is meant for use with unordered containers and is not a
+    /// cryptographic hash.
     std::size_t hash() const;
 
     /// Try to convert \p str to `APInt`
@@ -331,11 +365,10 @@ private:
 } // namespace APMath
 
 template <typename T>
-typename std::enable_if<std::is_integral<T>::value, T>::type
-    APMath::APInt::to() const {
+typename std::enable_if<std::is_integral<T>::value, T>::type APMath::APInt::to()
+    const {
     T result;
-    std::size_t const numBytes = std::min(numLimbs() * sizeof(Limb),
-                                          sizeof(T));
+    std::size_t const numBytes = std::min(numLimbs() * sizeof(Limb), sizeof(T));
     std::memcpy(&result, limbPtr(), numBytes);
     return result;
 }

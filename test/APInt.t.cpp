@@ -340,6 +340,62 @@ TEST_CASE("negate - 1") {
     CHECK(a.ucmp(ref) == 0);
 }
 
+TEST_CASE("Bitset operations") {
+    APInt a(100);
+    CHECK(a.popcount() == 0);
+    CHECK(a.clz() == 100);
+    CHECK(a.ctz() == 100);
+    a.set(0);
+    CHECK(a.limbs()[0] == 1);
+    CHECK(a.popcount() == 1);
+    CHECK(a.clz() == 99);
+    CHECK(a.ctz() == 0);
+
+    a.set(64);
+    CHECK(a.limbs()[1] == 1);
+    CHECK(a.popcount() == 2);
+    CHECK(a.clz() == 35);
+    CHECK(a.ctz() == 0);
+
+    a.set(75);
+    CHECK(a.limbs()[1] == 2049);
+    CHECK(a.popcount() == 3);
+    CHECK(a.clz() == 24);
+    CHECK(a.ctz() == 0);
+
+    a.set(0, false);
+    CHECK(a.limbs()[0] == 0);
+    CHECK(a.popcount() == 2);
+    CHECK(a.clz() == 24);
+    CHECK(a.ctz() == 64);
+
+    a.set(10);
+    CHECK(a.ctz() == 10);
+    a.clear(10);
+
+    a.clear(64);
+    CHECK(a.limbs()[1] == 2048);
+    CHECK(a.popcount() == 1);
+    CHECK(a.clz() == 24);
+    CHECK(a.ctz() == 75);
+
+    a.clear(75);
+    CHECK(a.limbs()[1] == 0);
+    CHECK(a.popcount() == 0);
+    CHECK(!a.any());
+    CHECK(a.none());
+    CHECK(a == 0);
+
+    a.flip(75);
+    CHECK(a.limbs()[1] == 2048);
+    CHECK(a.any());
+    CHECK(!a.none());
+
+    a.flip();
+    a.set(75);
+    CHECK(a.all());
+}
+
 TEST_CASE("zext - 1") {
     APInt a(6, 3);
     a.zext(64);
