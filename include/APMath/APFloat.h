@@ -113,6 +113,8 @@ APFloat atan(APFloat const& arg);
 /// type. This is temporary until we take the time to implement proper IEEE
 /// emulation. Until then only single and double precision are supported.
 class APFloat {
+    using Limb = std::uint64_t;
+    
 public:
     /// Construct an \p APFloat with \p precision
     explicit APFloat(APFloatPrec precision);
@@ -159,6 +161,11 @@ public:
     /// Convert `*this` to a string in the specified base.
     std::string toString() const;
 
+    /// View over limbs
+    ///
+    /// \Note Right now this always return a span of size 1
+    std::span<Limb const> limbs() const { return { &_limb, 1 }; }
+    
     /// Convert to native float type
     template <typename T>
     T to() const {
@@ -201,6 +208,7 @@ private:
     union {
         float _f32;
         double _f64;
+        Limb _limb;
     };
 };
 
