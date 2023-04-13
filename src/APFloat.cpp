@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cmath>
 #include <sstream>
+#include <functional>
 
 using namespace APMath;
 
@@ -242,6 +243,15 @@ std::string APFloat::toString() const {
         sstr << _f64;
     }
     return std::move(sstr).str();
+}
+
+std::size_t APFloat::hash() const {
+    if (isSingle()) {
+        return std::hash<float>{}(_f32);
+    }
+    else {
+        return std::hash<double>{}(_f64);
+    }
 }
 
 std::optional<APFloat> APFloat::parse(std::string_view str,

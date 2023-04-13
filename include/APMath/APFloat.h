@@ -177,6 +177,10 @@ public:
             return static_cast<T>(_f64);
         }
     }
+    
+    /// Note that this is meant for use with unordered containers and is not a
+    /// cryptographic hash.
+    std::size_t hash() const;
 
     /// Try to convert \p str to `APFloat`
     /// \param str All characters except ones representing digits in the
@@ -213,5 +217,12 @@ private:
 };
 
 } // namespace APMath
+
+template <>
+struct std::hash<APMath::APFloat> {
+    std::size_t operator()(APMath::APFloat const& value) const {
+        return value.hash();
+    }
+};
 
 #endif // APMATH_APFLOAT_H_
