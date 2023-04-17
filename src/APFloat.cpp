@@ -29,6 +29,8 @@ APFloat APMath::precisionCast(APFloat operand, APFloatPrec precision) {
 
 int APMath::cmp(APFloat const& lhs, APFloat const& rhs) { return lhs.cmp(rhs); }
 
+int APMath::cmp(APFloat const& lhs, double rhs) { return lhs.cmp(rhs); }
+
 static bool isSinglePrec(auto const& arg, auto const&...) {
     return arg.precision() == APFloatPrec::Single;
 }
@@ -231,6 +233,10 @@ int APFloat::cmp(APFloat const& rhs) const {
         }
         return 0;
     }
+}
+
+int APFloat::cmp(double rhs) const {
+    return cmp(APFloat(rhs, precision()));
 }
 
 std::string APFloat::toString() const {

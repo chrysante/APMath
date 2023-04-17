@@ -50,6 +50,9 @@ APFloat precisionCast(APFloat operand, APFloatPrec precision);
 /// Compare \p lhs and \p rhs
 int cmp(APFloat const& lhs, APFloat const& rhs);
 
+/// Compare \p lhs and \p rhs
+int cmp(APFloat const& lhs, double rhs);
+
 /// ## Common math functions
 
 /// Compute absolute value of \p arg
@@ -151,6 +154,9 @@ public:
 
     /// Compare `*this` and \p rhs
     int cmp(APFloat const& rhs) const;
+    
+    /// Compare `*this` and \p rhs
+    int cmp(double rhs) const;
 
     /// Returns wether the value is negative.
     bool negative() const;
@@ -190,6 +196,9 @@ public:
 
     /// Compare for equality.
     bool operator==(APFloat const& rhs) const { return cmp(rhs) == 0; }
+    
+    /// \overload
+    bool operator==(double rhs) const { return cmp(rhs) == 0; }
 
     /// Relational comparison.
     std::strong_ordering operator<=>(APFloat const& rhs) const {
