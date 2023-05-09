@@ -123,6 +123,12 @@ class APInt {
 public:
     using Limb = internal::Limb;
 
+    /// Boolean constant with value 0 and bitwidth 1
+    static APInt False() { return APInt(0, 1); }
+    
+    /// Boolean constant with value 1 and bitwidth 1
+    static APInt True() { return APInt(1, 1); }
+    
 public:
     /// Construct an `APInt` with \p bitwidth
     explicit APInt(std::size_t bitwidth);
