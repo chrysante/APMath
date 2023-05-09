@@ -152,6 +152,8 @@ int APMath::ucmp(std::uint64_t lhs, APInt const& rhs) { return -rhs.ucmp(lhs); }
 
 int APMath::scmp(APInt const& lhs, APInt const& rhs) { return lhs.scmp(rhs); }
 
+APInt::APInt(): APInt(0, 64) {}
+
 APInt::APInt(size_t bitwidth): APInt(0, bitwidth) {}
 
 APInt::APInt(uint64_t value, size_t bw):

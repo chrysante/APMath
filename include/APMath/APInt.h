@@ -130,7 +130,10 @@ public:
     static APInt True() { return APInt(1, 1); }
     
 public:
-    /// Construct an `APInt` with \p bitwidth
+    /// Construct an `APInt` with 64 bits and value 0
+    explicit APInt();
+    
+    /// Construct an `APInt` with \p bitwidth bits and value 0
     explicit APInt(std::size_t bitwidth);
 
     /// Construct an `APInt` with \p bitwidth and set it to \p value
@@ -267,6 +270,12 @@ public:
     /// Returns wether this integer is negative.
     bool negative() const;
 
+    /// Returns `1` if the high bit is set, `0` otherwise
+    int highbit() const {
+        return static_cast<int>(limbPtr()[numLimbs() - 1] >>
+                                (topLimbActiveBits - 1));
+    }
+    
     /// The bitwidth of this integer.
     std::size_t bitwidth() const { return _bitwidth; }
 
@@ -349,11 +358,6 @@ private:
     Limb const* limbPtr() const { return isLocal() ? &singleLimb : heapLimbs; }
     Limb* limbPtr() {
         return const_cast<Limb*>(static_cast<APInt const*>(this)->limbPtr());
-    }
-
-    int highbit() const {
-        return static_cast<int>(limbPtr()[numLimbs() - 1] >>
-                                (topLimbActiveBits - 1));
     }
 
     Limb* allocate(std::size_t numLimbs);
