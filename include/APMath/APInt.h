@@ -125,14 +125,14 @@ public:
 
     /// Boolean constant with value 0 and bitwidth 1
     static APInt False() { return APInt(0, 1); }
-    
+
     /// Boolean constant with value 1 and bitwidth 1
     static APInt True() { return APInt(1, 1); }
-    
+
 public:
     /// Construct an `APInt` with 64 bits and value 0
     explicit APInt();
-    
+
     /// Construct an `APInt` with \p bitwidth bits and value 0
     explicit APInt(std::size_t bitwidth);
 
@@ -252,7 +252,7 @@ public:
 
     /// Perform zero extend to \p bitwidth
     /// If \p bitwidth is less than current bitwidth, `*this` will be truncated.
-    /// Note that no member function `trunc()` is provided because this methed 
+    /// Note that no member function `trunc()` is provided because this method
     /// allows truncation
     APInt& zext(std::size_t bitwidth);
 
@@ -277,7 +277,7 @@ public:
         return static_cast<int>(limbPtr()[numLimbs() - 1] >>
                                 (topLimbActiveBits - 1));
     }
-    
+
     /// The bitwidth of this integer.
     std::size_t bitwidth() const { return _bitwidth; }
 
@@ -304,8 +304,11 @@ public:
 
     /// Access the limb at index \p index
     /// \p index must be less than `numLimbs()`
-    Limb limb(size_t index) const { assert(index < numLimbs()); return limbPtr()[index]; }
-    
+    Limb limb(size_t index) const {
+        assert(index < numLimbs());
+        return limbPtr()[index];
+    }
+
     /// Convert to native integral type.
     /// Truncates if `*this` is wider than `T`
     template <typename T>
@@ -334,8 +337,9 @@ public:
                                       size_t bitwidth = 0);
 
     /// Compare integers for equality.
-    /// Note that relational comparisons are not exposed as operator overloads due to
-    /// the ambiguity of signedness. Use `ucmp()` and `scmp()` to compare order.
+    /// Note that relational comparisons are not exposed as operator overloads
+    /// due to the ambiguity of signedness. Use `ucmp()` and `scmp()` to compare
+    /// order.
     bool operator==(APInt const& rhs) const { return ucmp(rhs) == 0; }
 
     /// \overload

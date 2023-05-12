@@ -2,8 +2,8 @@
 
 #include <cassert>
 #include <cmath>
-#include <sstream>
 #include <functional>
+#include <sstream>
 
 using namespace APMath;
 
@@ -235,9 +235,7 @@ int APFloat::cmp(APFloat const& rhs) const {
     }
 }
 
-int APFloat::cmp(double rhs) const {
-    return cmp(APFloat(rhs, precision()));
-}
+int APFloat::cmp(double rhs) const { return cmp(APFloat(rhs, precision())); }
 
 std::string APFloat::toString() const {
     std::stringstream sstr;

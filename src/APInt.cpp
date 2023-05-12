@@ -613,7 +613,7 @@ size_t APInt::clz() const {
         return builtinCLZ(limb) - (limbBitSize - topLimbActiveBits);
     }
     result += topLimbActiveBits;
-    for (; i != 0; ) {
+    for (; i != 0;) {
         --i;
         auto const limb = l[i];
         if (limb != 0) {

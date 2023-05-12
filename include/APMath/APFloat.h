@@ -117,12 +117,15 @@ APFloat atan(APFloat const& arg);
 /// emulation. Until then only single and double precision are supported.
 class APFloat {
     using Limb = std::uint64_t;
-    
+
 public:
-    /// Construct an \p APFloat with \p precision
+    /// Construct an `APFloat` with `Double` precision
+    APFloat(): APFloat(APFloatPrec::Double) {}
+    
+    /// Construct an `APFloat` with \p precision
     explicit APFloat(APFloatPrec precision);
 
-    /// Construct an \p APFloat with \p precision and set it to \p value
+    /// Construct an `APFloat` with \p precision and set it to \p value
     explicit APFloat(long double value, APFloatPrec precision);
 
     APFloat(APFloat const& rhs);
@@ -154,7 +157,7 @@ public:
 
     /// Compare `*this` and \p rhs
     int cmp(APFloat const& rhs) const;
-    
+
     /// Compare `*this` and \p rhs
     int cmp(double rhs) const;
 
@@ -171,7 +174,7 @@ public:
     ///
     /// \Note Right now this always return a span of size 1
     std::span<Limb const> limbs() const { return { &_limb, 1 }; }
-    
+
     /// Convert to native float type
     template <typename T>
     T to() const {
@@ -183,7 +186,7 @@ public:
             return static_cast<T>(_f64);
         }
     }
-    
+
     /// Note that this is meant for use with unordered containers and is not a
     /// cryptographic hash.
     std::size_t hash() const;
@@ -196,7 +199,7 @@ public:
 
     /// Compare for equality.
     bool operator==(APFloat const& rhs) const { return cmp(rhs) == 0; }
-    
+
     /// \overload
     bool operator==(double rhs) const { return cmp(rhs) == 0; }
 
