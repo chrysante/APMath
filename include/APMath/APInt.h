@@ -251,11 +251,13 @@ public:
     size_t ctz() const;
 
     /// Perform zero extend to \p bitwidth
-    /// If \p bitwidth is less than current bitwidth, `*this` will be shrunk.
+    /// If \p bitwidth is less than current bitwidth, `*this` will be truncated.
+    /// Note that no member function `trunc()` is provided because this methed 
+    /// allows truncation
     APInt& zext(std::size_t bitwidth);
 
     /// Perform sign extend to \p bitwidth
-    /// If \p bitwidth is less than current bitwidth, `*this` will be shrunk.
+    /// If \p bitwidth is less than current bitwidth, `*this` will be truncated
     APInt& sext(std::size_t bitwidth);
 
     /// Perform unsigned comparison between `*this` and \p rhs
@@ -267,10 +269,10 @@ public:
     /// Perform signed comparison between `*this` and \p rhs
     int scmp(APInt const& rhs) const;
 
-    /// Returns wether this integer is negative.
+    /// \Returns `true` iff this is negative interpreted as signed
     bool negative() const;
 
-    /// Returns `1` if the high bit is set, `0` otherwise
+    /// \Returns 1 if the high bit is set, 0 otherwise
     int highbit() const {
         return static_cast<int>(limbPtr()[numLimbs() - 1] >>
                                 (topLimbActiveBits - 1));
@@ -286,7 +288,7 @@ public:
 
     /// Convert `*this` to a string in the specified base.
     /// \param *this is interpreted as an unsigned integer.
-    /// \param base must be between 0 and 36 (inclusive)
+    /// \param base must be between 2 and 36 (inclusive)
     std::string toString(int base = 10) const&;
 
     /// \overload
@@ -294,14 +296,18 @@ public:
 
     /// Convert `*this` to a string in the specified base.
     /// \param *this is interpreted as a signed integer.
-    /// \param base must be between 0 and 36 (inclusive)
+    /// \param base must be between 2 and 36 (inclusive)
     std::string signedToString(int base = 10) const;
 
     /// View over limbs
     std::span<Limb const> limbs() const { return { limbPtr(), numLimbs() }; }
 
-    /// Convert to native integral type
-    /// Truncates if `*this` is wider than `T`.
+    /// Access the limb at index \p index
+    /// \p index must be less than `numLimbs()`
+    Limb limb(size_t index) const { assert(index < numLimbs()); return limbPtr()[index]; }
+    
+    /// Convert to native integral type.
+    /// Truncates if `*this` is wider than `T`
     template <typename T>
     typename std::enable_if<std::is_integral<T>::value, T>::type to() const;
 
@@ -316,8 +322,8 @@ public:
     /// \param str All characters except ones representing digits in the
     /// specified base and an initial '-' are ignored.
     ///
-    /// \param base The base the number is represented in. Must be between 0 and
-    /// 36 (inclusive)
+    /// \param base The base the number is represented in. Must be between 2 and
+    /// 36 (inclusive), or 0 to deduce required bitwidth from \p str
     ///
     /// \param bitwidth The desired bitwidth of the result. A value of zero
     /// means the result will be exactly as wide as required to represent the
@@ -328,7 +334,7 @@ public:
                                       size_t bitwidth = 0);
 
     /// Compare integers for equality.
-    /// Note that relational comparisons are not exposed as C++ operators due to
+    /// Note that relational comparisons are not exposed as operator overloads due to
     /// the ambiguity of signedness. Use `ucmp()` and `scmp()` to compare order.
     bool operator==(APInt const& rhs) const { return ucmp(rhs) == 0; }
 
