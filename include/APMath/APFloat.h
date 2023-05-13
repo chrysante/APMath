@@ -161,8 +161,14 @@ public:
     /// Compare `*this` and \p rhs
     int cmp(double rhs) const;
 
-    /// Returns wether the value is negative.
-    bool negative() const;
+    /// \Returns The sign of the value
+    int signbit() const;
+
+    /// \Returns `true` iff the value is `+/-inf`
+    bool isInf() const;
+
+    /// \Returns `true` iff the value is any `NaN`
+    bool isNaN() const;
 
     /// The bitwidth of this value.
     APFloatPrec precision() const { return { _mantWidth, _expWidth }; }

@@ -237,6 +237,33 @@ int APFloat::cmp(APFloat const& rhs) const {
 
 int APFloat::cmp(double rhs) const { return cmp(APFloat(rhs, precision())); }
 
+int APFloat::signbit() const {
+    if (isSingle()) {
+        return std::signbit(_f32);
+    }
+    else {
+        return std::signbit(_f64);
+    }
+}
+
+bool APFloat::isInf() const {
+    if (isSingle()) {
+        return std::isinf(_f32);
+    }
+    else {
+        return std::isinf(_f64);
+    }
+}
+
+bool APFloat::isNaN() const {
+    if (isSingle()) {
+        return std::isnan(_f32);
+    }
+    else {
+        return std::isnan(_f64);
+    }
+}
+
 std::string APFloat::toString() const {
     std::stringstream sstr;
     sstr << std::fixed;
