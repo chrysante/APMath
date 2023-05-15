@@ -46,6 +46,7 @@ APInt APMath::valuecast(APFloat const& from, size_t toBitwidth) {
             return APInt(static_cast<uint64_t>(from.to<float>()), 64);
         default:
             assert(false);
+            return APInt{};
         }
     }
     else {
@@ -60,6 +61,7 @@ APInt APMath::valuecast(APFloat const& from, size_t toBitwidth) {
             return APInt(static_cast<uint64_t>(from.to<double>()), 64);
         default:
             assert(false);
+            return APInt{};
         }
     }
 }
@@ -93,6 +95,7 @@ APInt APMath::signedValuecast(APFloat const& from, size_t toBitwidth) {
             return APInt(static_cast<int64_t>(from.to<float>()), 64);
         default:
             assert(false);
+            return APInt{};
         }
     }
     else {
@@ -107,6 +110,7 @@ APInt APMath::signedValuecast(APFloat const& from, size_t toBitwidth) {
             return APInt(static_cast<int64_t>(from.to<double>()), 64);
         default:
             assert(false);
+            return APInt{};
         }
     }
 }
