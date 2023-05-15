@@ -1,6 +1,7 @@
 #ifndef APMATH_APINT_H_
 #define APMATH_APINT_H_
 
+#include <cassert>
 #include <climits>
 #include <cstddef>
 #include <cstdint>
