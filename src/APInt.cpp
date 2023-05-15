@@ -8,6 +8,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include <bit>
 
 using namespace APMath;
 using namespace APMath::internal;
@@ -555,71 +556,10 @@ bool APInt::none() const {
     return true;
 }
 
-#if defined(__GCC__) || defined(__clang__)
-
-[[maybe_unused]] static size_t builtinPopcount(unsigned x) {
-    return static_cast<size_t>(__builtin_popcount(x));
-}
-
-[[maybe_unused]] static size_t builtinPopcount(unsigned long x) {
-    return static_cast<size_t>(__builtin_popcountl(x));
-}
-
-[[maybe_unused]] static size_t builtinPopcount(unsigned long long x) {
-    return static_cast<size_t>(__builtin_popcountll(x));
-}
-
-[[maybe_unused]] static size_t builtinCLZ(unsigned x) {
-    return static_cast<size_t>(__builtin_clz(x));
-}
-
-[[maybe_unused]] static size_t builtinCLZ(unsigned long x) {
-    return static_cast<size_t>(__builtin_clzl(x));
-}
-
-[[maybe_unused]] static size_t builtinCLZ(unsigned long long x) {
-    return static_cast<size_t>(__builtin_clzll(x));
-}
-
-[[maybe_unused]] static size_t builtinCTZ(unsigned x) {
-    return static_cast<size_t>(__builtin_ctz(x));
-}
-
-[[maybe_unused]] static size_t builtinCTZ(unsigned long x) {
-    return static_cast<size_t>(__builtin_ctzl(x));
-}
-
-[[maybe_unused]] static size_t builtinCTZ(unsigned long long x) {
-    return static_cast<size_t>(__builtin_ctzll(x));
-}
-
-#elif defined(_MSC_VER)
-
-#include <bit>
-
-template <typename T> 
-static size_t builtinPopcount(T x) {
-    return static_cast<size_t>(std::popcount(x));
-}
-
-template <typename T>
-static size_t builtinCLZ(T x) {
-    return static_cast<size_t>(std::countl_zero(x));
-}
-
-template <typename T>
-[[maybe_unused]] static size_t builtinCTZ(T x) {
-    return static_cast<size_t>(std::countr_zero(x));
-}
-
-#else
-#error Unknown compiler
-#endif
-
 size_t APInt::popcount() const {
     size_t result = 0;
     for (size_t i = 0, end = numLimbs(); i < end; ++i) {
-        result += builtinPopcount(limbPtr()[i]);
+        result += static_cast<size_t>(std::popcount(limbPtr()[i]));
     }
     return result;
 }
@@ -629,14 +569,14 @@ size_t APInt::clz() const {
     size_t i      = numLimbs() - 1;
     size_t result = 0;
     if (auto const limb = l[i]; limb != 0) {
-        return builtinCLZ(limb) - (limbBitSize - topLimbActiveBits);
+        return static_cast<size_t>(std::countl_zero(limb)) - (limbBitSize - topLimbActiveBits);
     }
     result += topLimbActiveBits;
     for (; i != 0;) {
         --i;
         auto const limb = l[i];
         if (limb != 0) {
-            return result + builtinCLZ(limb);
+            return result + static_cast<size_t>(std::countl_zero(limb));
         }
         result += limbBitSize;
     }
@@ -650,13 +590,13 @@ size_t APInt::ctz() const {
     for (size_t i = 0; i < end; ++i) {
         auto const limb = l[i];
         if (limb != 0) {
-            return result + builtinCTZ(limb);
+            return result + static_cast<size_t>(std::countr_zero(limb));
         }
         result += limbBitSize;
     }
     auto const limb = l[end];
     if (limb != 0) {
-        return result + builtinCTZ(limb);
+        return result + static_cast<size_t>(std::countr_zero(limb));
     }
     return result + topLimbActiveBits;
 }
