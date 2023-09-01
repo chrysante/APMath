@@ -164,10 +164,10 @@ public:
     /// \Returns The sign of the value
     int signbit() const;
 
-    /// \Returns `true` iff the value is `+/-inf`
+    /// \Returns `true` if the value is `+/-inf`
     bool isInf() const;
 
-    /// \Returns `true` iff the value is any `NaN`
+    /// \Returns `true` if the value is any `NaN`
     bool isNaN() const;
 
     /// The bitwidth of this value.

@@ -270,7 +270,7 @@ public:
     /// Perform signed comparison between `*this` and \p rhs
     int scmp(APInt const& rhs) const;
 
-    /// \Returns `true` iff this is negative interpreted as signed
+    /// \Returns `true` if this is negative when interpreted as signed
     bool negative() const;
 
     /// \Returns 1 if the high bit is set, 0 otherwise
