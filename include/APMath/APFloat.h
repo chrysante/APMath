@@ -25,7 +25,7 @@ struct APFloatPrec {
     
     std::size_t exponentWidth;
 
-    /// \returns `mantissaWidth + exponentWidth`
+    /// \returns `mantissaWidth + exponentWidth + 1` (1 for the sign bit)
     std::size_t totalBitwidth() const;
     
     bool operator==(APFloatPrec const&) const = default;
