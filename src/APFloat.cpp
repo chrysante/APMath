@@ -7,6 +7,10 @@
 
 using namespace APMath;
 
+std::size_t APFloatPrec::totalBitwidth() const {
+    return mantissaWidth + exponentWidth;
+}
+
 APFloat APMath::add(APFloat lhs, APFloat const& rhs) { return lhs.add(rhs); }
 
 APFloat APMath::sub(APFloat lhs, APFloat const& rhs) { return lhs.sub(rhs); }

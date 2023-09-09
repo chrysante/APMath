@@ -22,8 +22,12 @@ struct APFloatPrec {
     static APFloatPrec const Double;
 
     std::size_t mantissaWidth;
+    
     std::size_t exponentWidth;
 
+    /// \returns `mantissaWidth + exponentWidth`
+    std::size_t totalBitwidth() const;
+    
     bool operator==(APFloatPrec const&) const = default;
 };
 
