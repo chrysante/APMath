@@ -153,8 +153,8 @@ APFloat::~APFloat() = default;
 
 void APFloat::swap(APFloat& rhs) noexcept {
     auto tmp = *this;
-    *this    = rhs;
-    rhs      = tmp;
+    *this = rhs;
+    rhs = tmp;
 }
 
 APFloat& APFloat::add(APFloat const& rhs) {
@@ -213,7 +213,7 @@ APFloat& APFloat::negate() {
 
 APFloat& APFloat::setPrecision(APFloatPrec precision) {
     _mantWidth = static_cast<uint32_t>(precision.mantissaWidth);
-    _expWidth  = static_cast<uint32_t>(precision.exponentWidth);
+    _expWidth = static_cast<uint32_t>(precision.exponentWidth);
     return *this;
 }
 
@@ -291,7 +291,7 @@ std::size_t APFloat::hash() const {
 
 std::optional<APFloat> APFloat::parse(std::string_view str,
                                       APFloatPrec precision) {
-    char* ptr  = nullptr;
+    char* ptr = nullptr;
     double res = std::strtod(str.data(), &ptr);
     if (ptr == str.data()) {
         return std::nullopt;
