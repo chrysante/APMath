@@ -135,7 +135,7 @@ APFloat::APFloat(long double value, APFloatPrec precision):
     _mantWidth(static_cast<uint32_t>(precision.mantissaWidth)),
     _expWidth(static_cast<uint32_t>(precision.exponentWidth)) {
     assert(precision == APFloatPrec::Single() ||
-           precision == APFloatPrec::Double);
+           precision == APFloatPrec::Double());
     if (isSingle()) {
         _f32 = static_cast<float>(value);
     }
@@ -272,10 +272,6 @@ bool APFloat::isNaN() const {
 }
 
 std::string APFloat::toString() const {
-#if defined(__linux__)
-    // Getting weird linker errors when using stringstream here
-    std::terminate();
-#else
     std::stringstream sstr;
     sstr << std::fixed;
     if (isSingle()) {
@@ -285,7 +281,6 @@ std::string APFloat::toString() const {
         sstr << _f64;
     }
     return std::move(sstr).str();
-#endif
 }
 
 std::size_t APFloat::hash() const {
