@@ -36,16 +36,17 @@ int APMath::cmp(APFloat const& lhs, APFloat const& rhs) { return lhs.cmp(rhs); }
 int APMath::cmp(APFloat const& lhs, double rhs) { return lhs.cmp(rhs); }
 
 static bool isSinglePrec(auto const& arg, auto const&...) {
-    return arg.precision() == APFloatPrec::Single;
+    return arg.precision() == APFloatPrec::Single();
 }
 
 static APFloat elemMathImpl(auto impl, auto const&... args) {
     if (isSinglePrec(args...)) {
-        return APFloat(impl(args.template to<float>()...), APFloatPrec::Single);
+        return APFloat(impl(args.template to<float>()...),
+                       APFloatPrec::Single());
     }
     else {
         return APFloat(impl(args.template to<double>()...),
-                       APFloatPrec::Double);
+                       APFloatPrec::Double());
     }
 }
 
@@ -120,18 +121,20 @@ APFloat APMath::atan(APFloat const& arg) {
     return elemMathImpl(ELEM_MATH_STD_IMPL(atan), arg);
 }
 
-APFloatPrec const APFloatPrec::Single = { .mantissaWidth = 23,
-                                          .exponentWidth = 8 };
+APFloatPrec APFloatPrec::Single() {
+    return APFloatPrec{ .mantissaWidth = 23, .exponentWidth = 8 };
+}
 
-APFloatPrec const APFloatPrec::Double = { .mantissaWidth = 52,
-                                          .exponentWidth = 11 };
+APFloatPrec APFloatPrec::Double() {
+    return APFloatPrec{ .mantissaWidth = 52, .exponentWidth = 11 };
+}
 
 APFloat::APFloat(APFloatPrec precision): APFloat(0.0, precision) {}
 
 APFloat::APFloat(long double value, APFloatPrec precision):
     _mantWidth(static_cast<uint32_t>(precision.mantissaWidth)),
     _expWidth(static_cast<uint32_t>(precision.exponentWidth)) {
-    assert(precision == APFloatPrec::Single ||
+    assert(precision == APFloatPrec::Single() ||
            precision == APFloatPrec::Double);
     if (isSingle()) {
         _f32 = static_cast<float>(value);
@@ -159,7 +162,7 @@ void APFloat::swap(APFloat& rhs) noexcept {
 
 APFloat& APFloat::add(APFloat const& rhs) {
     assert(precision() == rhs.precision());
-    if (precision() == APFloatPrec::Single) {
+    if (precision() == APFloatPrec::Single()) {
         _f32 += rhs._f32;
     }
     else {
@@ -170,7 +173,7 @@ APFloat& APFloat::add(APFloat const& rhs) {
 
 APFloat& APFloat::sub(APFloat const& rhs) {
     assert(precision() == rhs.precision());
-    if (precision() == APFloatPrec::Single) {
+    if (precision() == APFloatPrec::Single()) {
         _f32 -= rhs._f32;
     }
     else {
@@ -181,7 +184,7 @@ APFloat& APFloat::sub(APFloat const& rhs) {
 
 APFloat& APFloat::mul(APFloat const& rhs) {
     assert(precision() == rhs.precision());
-    if (precision() == APFloatPrec::Single) {
+    if (precision() == APFloatPrec::Single()) {
         _f32 *= rhs._f32;
     }
     else {
@@ -192,7 +195,7 @@ APFloat& APFloat::mul(APFloat const& rhs) {
 
 APFloat& APFloat::div(APFloat const& rhs) {
     assert(precision() == rhs.precision());
-    if (precision() == APFloatPrec::Single) {
+    if (precision() == APFloatPrec::Single()) {
         _f32 /= rhs._f32;
     }
     else {
@@ -202,7 +205,7 @@ APFloat& APFloat::div(APFloat const& rhs) {
 }
 
 APFloat& APFloat::negate() {
-    if (precision() == APFloatPrec::Single) {
+    if (precision() == APFloatPrec::Single()) {
         _f32 = -_f32;
     }
     else {
@@ -269,6 +272,10 @@ bool APFloat::isNaN() const {
 }
 
 std::string APFloat::toString() const {
+#if defined(__linux__)
+    // Getting weird linker errors when using stringstream here
+    std::terminate();
+#else
     std::stringstream sstr;
     sstr << std::fixed;
     if (isSingle()) {
@@ -278,6 +285,7 @@ std::string APFloat::toString() const {
         sstr << _f64;
     }
     return std::move(sstr).str();
+#endif
 }
 
 std::size_t APFloat::hash() const {

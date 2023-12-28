@@ -5,7 +5,9 @@
 #include <climits>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <initializer_list>
+#include <limits>
 #include <optional>
 #include <span>
 #include <string>
@@ -16,9 +18,9 @@ namespace APMath::internal {
 
 using Limb = std::uint64_t;
 
-static constexpr std::size_t limbSize    = sizeof(Limb);
+static constexpr std::size_t limbSize = sizeof(Limb);
 static constexpr std::size_t limbBitSize = limbSize * CHAR_BIT;
-static constexpr Limb limbMax            = Limb(-1);
+static constexpr Limb limbMax = Limb(-1);
 
 std::size_t ceilDiv(std::size_t a, std::size_t b);
 std::size_t ceilRem(std::size_t a, std::size_t b);
@@ -334,7 +336,7 @@ public:
     /// number. If a non-zero bitwidth is specified and the number does not fit,
     /// `std::nullopt` is returned.
     static std::optional<APInt> parse(std::string_view str,
-                                      int base        = 10,
+                                      int base = 10,
                                       size_t bitwidth = 0);
 
     /// Compare integers for equality.

@@ -10,7 +10,7 @@ using namespace APMath;
 
 template <>
 APInt APMath::bitcast(APFloat const& from) {
-    if (from.precision() == APFloatPrec::Single) {
+    if (from.precision() == APFloatPrec::Single()) {
         return APInt(std::bit_cast<uint32_t>(from.to<float>()), 32);
     }
     else {
@@ -24,17 +24,17 @@ APFloat APMath::bitcast(APInt const& from) {
            "Other sizes are not supported by APFloat");
     if (from.bitwidth() == 32) {
         return APFloat(std::bit_cast<float>(from.to<uint32_t>()),
-                       APFloatPrec::Single);
+                       APFloatPrec::Single());
     }
     else {
         return APFloat(std::bit_cast<double>(from.to<uint64_t>()),
-                       APFloatPrec::Double);
+                       APFloatPrec::Double());
     }
 }
 
 template <>
 APInt APMath::valuecast(APFloat const& from, size_t toBitwidth) {
-    if (from.precision() == APFloatPrec::Single) {
+    if (from.precision() == APFloatPrec::Single()) {
         switch (toBitwidth) {
         case 8:
             return APInt(static_cast<uint8_t>(from.to<float>()), 8);
@@ -73,17 +73,17 @@ APFloat APMath::valuecast(APInt const& from, size_t toBitwidth) {
     APInt ext = zext(from, 64);
     if (toBitwidth == 32) {
         return APFloat(static_cast<float>(ext.to<uint64_t>()),
-                       APFloatPrec::Single);
+                       APFloatPrec::Single());
     }
     else {
         return APFloat(static_cast<double>(ext.to<uint64_t>()),
-                       APFloatPrec::Double);
+                       APFloatPrec::Double());
     }
 }
 
 template <>
 APInt APMath::signedValuecast(APFloat const& from, size_t toBitwidth) {
-    if (from.precision() == APFloatPrec::Single) {
+    if (from.precision() == APFloatPrec::Single()) {
         switch (toBitwidth) {
         case 8:
             return APInt(static_cast<int8_t>(from.to<float>()), 8);
@@ -122,10 +122,10 @@ APFloat APMath::signedValuecast(APInt const& from, size_t toBitwidth) {
     APInt ext = sext(from, 64);
     if (toBitwidth == 32) {
         return APFloat(static_cast<float>(ext.to<int64_t>()),
-                       APFloatPrec::Single);
+                       APFloatPrec::Single());
     }
     else {
         return APFloat(static_cast<double>(ext.to<int64_t>()),
-                       APFloatPrec::Double);
+                       APFloatPrec::Double());
     }
 }

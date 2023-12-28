@@ -18,7 +18,7 @@ objdir "build/obj/%{cfg.longname}"
 
 architecture "x86_64"
 
-filter "system:macosx"
+filter "system:linux or macosx"
     buildoptions { 
         "-Wconversion", 
         "-Wall",

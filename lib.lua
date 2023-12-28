@@ -14,3 +14,6 @@ files {
     "src/Conversion.cpp",
 }
 
+filter "system:linux"
+    buildoptions "-fPIC"
+filter {}

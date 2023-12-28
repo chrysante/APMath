@@ -18,16 +18,25 @@ class APFloat;
 
 /// APFloat precision structure.
 struct APFloatPrec {
-    static APFloatPrec const Single;
-    static APFloatPrec const Double;
+    /// Static constructor
+    /// \Returns the instance that represents single precision
+    static APFloatPrec Single();
 
+    /// Static constructor
+    /// \Returns the instance that represents double precision
+    static APFloatPrec Double();
+
+    /// The number of bits used to represent the mantissa.
+    /// This is equal to `totalBitwidth() - exponentWidth - 1`
     std::size_t mantissaWidth;
-    
+
+    /// The number of bits used to represent the exponent.
+    /// This is equal to `totalBitwidth() - mantissaWidth - 1`
     std::size_t exponentWidth;
 
-    /// \returns `mantissaWidth + exponentWidth + 1` (1 for the sign bit)
+    /// \Returns `mantissaWidth + exponentWidth + 1` (+1 for the sign bit)
     std::size_t totalBitwidth() const;
-    
+
     bool operator==(APFloatPrec const&) const = default;
 };
 
@@ -124,8 +133,8 @@ class APFloat {
 
 public:
     /// Construct an `APFloat` with `Double` precision
-    APFloat(): APFloat(APFloatPrec::Double) {}
-    
+    APFloat(): APFloat(APFloatPrec::Double()) {}
+
     /// Construct an `APFloat` with \p precision
     explicit APFloat(APFloatPrec precision);
 
@@ -205,7 +214,7 @@ public:
     /// \param str All characters except ones representing digits in the
     /// specified base, an initial '-' and the first '.' are ignored.
     static std::optional<APFloat> parse(
-        std::string_view str, APFloatPrec precision = APFloatPrec::Double);
+        std::string_view str, APFloatPrec precision = APFloatPrec::Double());
 
     /// Compare for equality.
     bool operator==(APFloat const& rhs) const { return cmp(rhs) == 0; }
@@ -226,7 +235,7 @@ public:
     }
 
 private:
-    bool isSingle() const { return precision() == APFloatPrec::Single; }
+    bool isSingle() const { return precision() == APFloatPrec::Single(); }
 
 private:
     std::uint32_t _mantWidth;
