@@ -394,7 +394,7 @@ static void lshlShort(APInt::Limb* l, size_t numLimbs, size_t bitOffset) {
 
 APInt& APInt::lshl(int nb) {
     assert(nb >= 0);
-    assert(nb < _bitwidth);
+    assert(nb < (int)_bitwidth);
     size_t const numBits = static_cast<size_t>(nb);
     size_t const bitOffset = numBits % limbBitSize;
     size_t const limbOffset = numBits / limbBitSize;
@@ -437,7 +437,7 @@ static void lshrShort(APInt::Limb* l, size_t numLimbs, size_t bitOffset) {
 
 APInt& APInt::lshr(int nb) {
     assert(nb >= 0);
-    assert(nb < _bitwidth);
+    assert(nb < (int)_bitwidth);
     size_t const numBits = static_cast<size_t>(nb);
     size_t const bitOffset = numBits % limbBitSize;
     size_t const limbOffset = numBits / limbBitSize;
@@ -490,12 +490,12 @@ APInt& APInt::ashr(int nb) {
     return *this;
 }
 
-APInt& APInt::rotl(int numBits) {
+APInt& APInt::rotl(int) {
     assert(false);
     std::abort();
 }
 
-APInt& APInt::rotr(int numBits) {
+APInt& APInt::rotr(int) {
     assert(false);
     std::abort();
 }
@@ -726,14 +726,14 @@ std::string APInt::toString(int b) && {
     return res;
 }
 
-std::string APInt::signedToString(int b) const {
+std::string APInt::signedToString(int base) const {
     bool const neg = negative();
     if (!neg) {
-        return toString();
+        return toString(base);
     }
     auto negative = APMath::negate(*this);
     negative.sext(std::max<size_t>(8, negative.bitwidth()));
-    auto res = negative.toString();
+    auto res = negative.toString(base);
     res.insert(res.begin(), '-');
     return res;
 }
@@ -860,4 +860,4 @@ APInt::Limb* APInt::allocate(size_t numLimbs) {
     return static_cast<Limb*>(std::malloc(numLimbs * limbSize));
 }
 
-void APInt::deallocate(Limb* ptr, size_t numLimbs) { std::free(ptr); }
+void APInt::deallocate(Limb* ptr, size_t) { std::free(ptr); }
