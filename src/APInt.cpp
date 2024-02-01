@@ -52,9 +52,9 @@ APInt APMath::mul(APInt const& lhs, APInt const& rhs) {
         Limb carry = 0;
         for (size_t i = 0, k = j; k < lhs.numLimbs(); ++i, ++k) {
             Limb newCarry = mulCarry(l[i], factor);
-            assert(newCarry != limbMax);
+            assert(newCarry != LimbMax);
             t[k] = l[i] * factor;
-            newCarry += t[k] > limbMax - carry;
+            newCarry += t[k] > LimbMax - carry;
             t[k] += carry;
             carry = newCarry;
         }
@@ -66,7 +66,7 @@ APInt APMath::mul(APInt const& lhs, APInt const& rhs) {
 std::pair<APInt, APInt> APMath::udivrem(APInt const& numerator,
                                         APInt const& denominator) {
     using Limb = APInt::Limb;
-    constexpr size_t limbBitSize = sizeof(Limb) * CHAR_BIT;
+    constexpr size_t LimbBitSize = sizeof(Limb) * CHAR_BIT;
     assert(numerator.bitwidth() == denominator.bitwidth());
     assert(denominator.ucmp(0) != 0);
     APInt quotient(0, numerator.bitwidth());
@@ -77,10 +77,10 @@ std::pair<APInt, APInt> APMath::udivrem(APInt const& numerator,
     for (size_t i = numerator.bitwidth(); i > 0;) {
         --i;
         remainder.lshl(1);
-        r[0] |= (n[i / limbBitSize] >> (i % limbBitSize)) & Limb(1);
+        r[0] |= (n[i / LimbBitSize] >> (i % LimbBitSize)) & Limb(1);
         if (remainder.ucmp(denominator) >= 0) {
             remainder.sub(denominator);
-            q[i / limbBitSize] |= Limb(1) << (i % limbBitSize);
+            q[i / LimbBitSize] |= Limb(1) << (i % LimbBitSize);
         }
     }
     return { std::move(quotient), std::move(remainder) };
@@ -171,6 +171,21 @@ int APMath::ucmp(std::uint64_t lhs, APInt const& rhs) { return -rhs.ucmp(lhs); }
 
 int APMath::scmp(APInt const& lhs, APInt const& rhs) { return lhs.scmp(rhs); }
 
+APInt APInt::UMax(size_t bitwidth) { return btwnot(UMin(bitwidth)); }
+
+APInt APInt::UMin(size_t bitwidth) { return APInt(0, bitwidth); }
+
+APInt APInt::SMax(size_t bitwidth) { return btwnot(SMin(bitwidth)); }
+
+APInt APInt::SMin(size_t bitwidth) {
+    APInt value(0, bitwidth);
+    auto* l = value.limbPtr();
+    auto& highLimb = l[(bitwidth - 1) / LimbBitSize];
+    highLimb |= Limb(-1) << ((bitwidth - 1) % LimbBitSize);
+    highLimb &= value.topLimbMask();
+    return value;
+}
+
 APInt::APInt(): APInt(0, 64) {}
 
 APInt::APInt(size_t bitwidth): APInt(0, bitwidth) {}
@@ -178,7 +193,7 @@ APInt::APInt(size_t bitwidth): APInt(0, bitwidth) {}
 APInt::APInt(uint64_t value, size_t bw):
     _bitwidth(static_cast<uint32_t>(bw)),
     topLimbActiveBits(
-        static_cast<uint32_t>(ceilRem(bitwidth(), limbSize * CHAR_BIT))) {
+        static_cast<uint32_t>(ceilRem(bitwidth(), LimbSize * CHAR_BIT))) {
     assert(bw > 0);
     assert(bw <= maxBitwidth());
     if (isLocal()) {
@@ -297,9 +312,9 @@ void APInt::swap(APInt& rhs) noexcept {
     std::swap(topLimbActiveBits, rhs.topLimbActiveBits);
     /// Use memcpy to swap to avoid reading inactive union member.
     Limb tmp;
-    std::memcpy(&tmp, &singleLimb, limbSize);
-    std::memcpy(&singleLimb, &rhs.singleLimb, limbSize);
-    std::memcpy(&rhs.singleLimb, &tmp, limbSize);
+    std::memcpy(&tmp, &singleLimb, LimbSize);
+    std::memcpy(&singleLimb, &rhs.singleLimb, LimbSize);
+    std::memcpy(&rhs.singleLimb, &tmp, LimbSize);
 }
 
 APInt& APInt::add(APInt const& rhs) {
@@ -308,8 +323,8 @@ APInt& APInt::add(APInt const& rhs) {
     Limb* l = limbPtr();
     Limb const* r = rhs.limbPtr();
     for (size_t i = 0; i < numLimbs(); ++i) {
-        Limb const newCarry = l[i] > limbMax - r[i] ||
-                              l[i] > limbMax - (r[i] + carry);
+        Limb const newCarry = l[i] > LimbMax - r[i] ||
+                              l[i] > LimbMax - (r[i] + carry);
         l[i] += r[i] + carry;
         carry = newCarry;
     }
@@ -380,12 +395,12 @@ APInt& APInt::btwxor(APInt const& rhs) {
 }
 
 static void lshlShort(APInt::Limb* l, size_t numLimbs, size_t bitOffset) {
-    assert(bitOffset < limbBitSize);
+    assert(bitOffset < LimbBitSize);
     Limb carry = 0;
-    size_t const rightShiftAmount = limbBitSize - bitOffset;
+    size_t const rightShiftAmount = LimbBitSize - bitOffset;
     for (size_t i = 0; i < numLimbs; ++i) {
         Limb const newCarry =
-            rightShiftAmount == limbBitSize ? 0 : l[i] >> rightShiftAmount;
+            rightShiftAmount == LimbBitSize ? 0 : l[i] >> rightShiftAmount;
         l[i] <<= bitOffset;
         l[i] |= carry;
         carry = newCarry;
@@ -396,10 +411,10 @@ APInt& APInt::lshl(int nb) {
     assert(nb >= 0);
     assert(nb < (int)_bitwidth);
     size_t const numBits = static_cast<size_t>(nb);
-    size_t const bitOffset = numBits % limbBitSize;
-    size_t const limbOffset = numBits / limbBitSize;
+    size_t const bitOffset = numBits % LimbBitSize;
+    size_t const limbOffset = numBits / LimbBitSize;
     Limb* l = limbPtr();
-    if (numBits < limbBitSize) {
+    if (numBits < LimbBitSize) {
         lshlShort(l, numLimbs(), bitOffset);
     }
     else {
@@ -421,14 +436,14 @@ APInt& APInt::lshl(int nb) {
 
 static void lshrShort(APInt::Limb* l, size_t numLimbs, size_t bitOffset) {
     using Limb = APInt::Limb;
-    constexpr size_t limbBitSize = sizeof(Limb) * CHAR_BIT;
-    assert(bitOffset < limbBitSize);
+    constexpr size_t LimbBitSize = sizeof(Limb) * CHAR_BIT;
+    assert(bitOffset < LimbBitSize);
     Limb carry = 0;
-    size_t const leftShiftAmount = limbBitSize - bitOffset;
+    size_t const leftShiftAmount = LimbBitSize - bitOffset;
     for (size_t i = numLimbs; i > 0;) {
         --i;
         Limb const newCarry =
-            leftShiftAmount == limbBitSize ? 0 : l[i] << leftShiftAmount;
+            leftShiftAmount == LimbBitSize ? 0 : l[i] << leftShiftAmount;
         l[i] >>= bitOffset;
         l[i] |= carry;
         carry = newCarry;
@@ -437,12 +452,12 @@ static void lshrShort(APInt::Limb* l, size_t numLimbs, size_t bitOffset) {
 
 APInt& APInt::lshr(int nb) {
     assert(nb >= 0);
-    assert(nb < _bitwidth);
+    assert(nb < (int)_bitwidth);
     size_t const numBits = static_cast<size_t>(nb);
-    size_t const bitOffset = numBits % limbBitSize;
-    size_t const limbOffset = numBits / limbBitSize;
+    size_t const bitOffset = numBits % LimbBitSize;
+    size_t const limbOffset = numBits / LimbBitSize;
     Limb* l = limbPtr();
-    if (numBits < limbBitSize) {
+    if (numBits < LimbBitSize) {
         lshrShort(l, numLimbs(), bitOffset);
     }
     else {
@@ -471,14 +486,14 @@ APInt& APInt::ashr(int nb) {
         return *this;
     }
     Limb* const l = limbPtr();
-    size_t const loopEnd = ceilDiv(bitwidth() - numBits, limbBitSize);
+    size_t const loopEnd = ceilDiv(bitwidth() - numBits, LimbBitSize);
     for (size_t i = numLimbs(); i > loopEnd;) {
         --i;
         l[i] = Limb(-1);
     }
     if (topLimbActiveBits < numBits) {
         l[loopEnd - 1] |= Limb(-1)
-                          << (limbBitSize - (numBits - topLimbActiveBits));
+                          << (LimbBitSize - (numBits - topLimbActiveBits));
     }
     else if (topLimbActiveBits == numBits) {
         l[loopEnd - 1] |= Limb(-1);
@@ -523,17 +538,17 @@ APInt& APInt::set(size_t n, bool value) {
 }
 
 APInt& APInt::set(size_t n) {
-    limbPtr()[n / limbBitSize] |= Limb(1) << (n % limbBitSize);
+    limbPtr()[n / LimbBitSize] |= Limb(1) << (n % LimbBitSize);
     return *this;
 }
 
 APInt& APInt::clear(size_t n) {
-    limbPtr()[n / limbBitSize] &= ~(Limb(1) << (n % limbBitSize));
+    limbPtr()[n / LimbBitSize] &= ~(Limb(1) << (n % LimbBitSize));
     return *this;
 }
 
 APInt& APInt::flip(size_t n) {
-    limbPtr()[n / limbBitSize] ^= Limb(1) << (n % limbBitSize);
+    limbPtr()[n / LimbBitSize] ^= Limb(1) << (n % LimbBitSize);
     return *this;
 }
 
@@ -547,7 +562,7 @@ APInt& APInt::flip() {
 }
 
 bool APInt::test(size_t n) const {
-    return limbPtr()[n / limbBitSize] & (Limb(1) << (n % limbBitSize));
+    return limbPtr()[n / LimbBitSize] & (Limb(1) << (n % LimbBitSize));
 }
 
 bool APInt::all() const {
@@ -588,7 +603,7 @@ size_t APInt::clz() const {
     size_t result = 0;
     if (auto const limb = l[i]; limb != 0) {
         return static_cast<size_t>(std::countl_zero(limb)) -
-               (limbBitSize - topLimbActiveBits);
+               (LimbBitSize - topLimbActiveBits);
     }
     result += topLimbActiveBits;
     for (; i != 0;) {
@@ -597,7 +612,7 @@ size_t APInt::clz() const {
         if (limb != 0) {
             return result + static_cast<size_t>(std::countl_zero(limb));
         }
-        result += limbBitSize;
+        result += LimbBitSize;
     }
     return result;
 }
@@ -611,7 +626,7 @@ size_t APInt::ctz() const {
         if (limb != 0) {
             return result + static_cast<size_t>(std::countr_zero(limb));
         }
-        result += limbBitSize;
+        result += LimbBitSize;
     }
     auto const limb = l[end];
     if (limb != 0) {
@@ -656,10 +671,8 @@ int APInt::scmp(APInt const& rhs) const {
 
 bool APInt::negative() const { return highbit() != 0; }
 
-static int ucmpImpl(APInt::Limb const* lhs,
-                    size_t lhsNumLimbs,
-                    APInt::Limb const* rhs,
-                    size_t rhsNumLimbs) {
+static int ucmpImpl(APInt::Limb const* lhs, size_t lhsNumLimbs,
+                    APInt::Limb const* rhs, size_t rhsNumLimbs) {
     if (lhsNumLimbs != rhsNumLimbs) {
         /// If one is bigger than the other, we need to test the top limbs
         /// separately.
@@ -789,8 +802,7 @@ static int extractSign(std::string_view s, int base) {
     return 0;
 }
 
-std::optional<APInt> APInt::parse(std::string_view s,
-                                  int base,
+std::optional<APInt> APInt::parse(std::string_view s, int base,
                                   size_t targetBW) {
     assert(base >= 2);
     assert(base <= 36);
@@ -807,7 +819,7 @@ std::optional<APInt> APInt::parse(std::string_view s,
         }
     }
     size_t requiredBW = 0;
-    APInt res(targetBW == 0 ? limbBitSize : targetBW);
+    APInt res(targetBW == 0 ? LimbBitSize : targetBW);
     Limb* l = res.limbPtr();
     while (str.size() > 1 || str[0] != 0) {
         ++requiredBW;
@@ -820,8 +832,8 @@ std::optional<APInt> APInt::parse(std::string_view s,
                 return std::nullopt;
             }
         }
-        l[(requiredBW - 1) / limbBitSize] |=
-            Limb(str.back() % 2) << ((requiredBW - 1) % limbBitSize);
+        l[(requiredBW - 1) / LimbBitSize] |=
+            Limb(str.back() % 2) << ((requiredBW - 1) % LimbBitSize);
         div2(str, base);
     }
     if (res.ucmp(0) == 0) {
@@ -857,7 +869,7 @@ size_t APInt::hash() const {
 }
 
 APInt::Limb* APInt::allocate(size_t numLimbs) {
-    return static_cast<Limb*>(std::malloc(numLimbs * limbSize));
+    return static_cast<Limb*>(std::malloc(numLimbs * LimbSize));
 }
 
 void APInt::deallocate(Limb* ptr, [[maybe_unused]] size_t numLimbs) {

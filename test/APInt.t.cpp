@@ -20,7 +20,7 @@ TEST_CASE("Lifetime") {
     }
     SECTION("Move construction") {
         APInt tmp = a;
-        APInt b   = std::move(tmp);
+        APInt b = std::move(tmp);
         CHECK(a.ucmp(b) == 0);
     }
     SECTION("Copy assignment") {
@@ -33,7 +33,7 @@ TEST_CASE("Lifetime") {
         auto const bWidth = GENERATE(1u, 128u);
         APInt b(bWidth);
         APInt tmp = a;
-        b         = std::move(tmp);
+        b = std::move(tmp);
         CHECK(a.ucmp(b) == 0);
     }
 }
@@ -81,8 +81,8 @@ TEST_CASE("ucmp - 3") {
 }
 
 TEST_CASE("scmp - 1") {
-    int64_t const aVal    = GENERATE(-100, -1, 0, 10, 100);
-    int64_t const bVal    = GENERATE(-100, -1, 0, 10, 100);
+    int64_t const aVal = GENERATE(-100, -1, 0, 10, 100);
+    int64_t const bVal = GENERATE(-100, -1, 0, 10, 100);
     size_t const bitwidth = GENERATE(8u, 63u, 64u, 65u);
     APInt const a({ uint64_t(aVal), aVal >= 0 ? 0ull : -1ull }, bitwidth);
     APInt const b({ uint64_t(bVal), bVal >= 0 ? 0ull : -1ull }, bitwidth);
@@ -132,8 +132,7 @@ TEST_CASE("add - overflow - 1") {
 }
 
 TEST_CASE("add - overflow - 2") {
-    APInt a({ 0xFFFF'FFFF'FFFF'FFFF,
-              0xFFFF'FFFF'FFFF'FFFF,
+    APInt a({ 0xFFFF'FFFF'FFFF'FFFF, 0xFFFF'FFFF'FFFF'FFFF,
               0x7FFF'FFFF'FFFF'FFFF },
             192);
     APInt const b(1, 192);
@@ -174,8 +173,7 @@ TEST_CASE("sub - 3") {
 TEST_CASE("sub - underflow - 1") {
     APInt a(0, 192);
     APInt const b(1, 192);
-    APInt const c({ 0xFFFF'FFFF'FFFF'FFFF,
-                    0xFFFF'FFFF'FFFF'FFFF,
+    APInt const c({ 0xFFFF'FFFF'FFFF'FFFF, 0xFFFF'FFFF'FFFF'FFFF,
                     0xFFFF'FFFF'FFFF'FFFF },
                   192);
     a.sub(b);
@@ -239,14 +237,14 @@ TEST_CASE("udivrem - 1") {
 }
 
 TEST_CASE("sdivrem - 1") {
-    int64_t const aVal    = GENERATE(-100, 0, 1, 7, 10, 100, 99999);
-    int64_t const bVal    = GENERATE(-100, 1, 2, 7, 99999);
+    int64_t const aVal = GENERATE(-100, 0, 1, 7, 10, 100, 99999);
+    int64_t const bVal = GENERATE(-100, 1, 2, 7, 99999);
     size_t const bitwidth = GENERATE(64u, 65u, 127u, 128u);
     APInt a(uint64_t(aVal), 64);
     a.sext(bitwidth);
     APInt b(uint64_t(bVal), 64);
     b.sext(bitwidth);
-    auto const [q, r]  = sdivrem(a, b);
+    auto const [q, r] = sdivrem(a, b);
     int64_t const qVal = aVal / bVal;
     APInt qRef(uint64_t(qVal), 64);
     qRef.sext(bitwidth);
@@ -330,7 +328,7 @@ TEST_CASE("ashr - 1") {
 }
 
 TEST_CASE("negate - 1") {
-    uint64_t const aVal   = GENERATE(-100u, uint64_t(-1), 0u, 1u, 100u);
+    uint64_t const aVal = GENERATE(-100u, uint64_t(-1), 0u, 1u, 100u);
     size_t const bitwidth = GENERATE(64u, 65u, 127, 128u);
     APInt a(aVal, 64);
     a.sext(bitwidth);
@@ -469,11 +467,34 @@ TEST_CASE("Conversion to native") {
     CHECK(b.to<int32_t>() == 255);
     APInt c = APInt::parse("1 0000 0000 0000 0123", 16, 128).value();
     CHECK(c.to<int64_t>() == 0x123);
-#if defined(__SIZEOF_INT128__) && !defined(__linux__) 
+#if defined(__SIZEOF_INT128__) && !defined(__linux__)
     CHECK(c.to<__uint128_t>() - 0x124 == ~uint64_t(0));
 #endif
     APInt d(0x1'0000'0123, 64);
     CHECK(d.to<int32_t>() == 0x123);
     APInt e(0x1'0000'0123, 32);
     CHECK(e.to<int64_t>() == 0x123);
+}
+
+TEST_CASE("Min/Max") {
+    CHECK(scmp(APInt::SMin(1), APInt(1, 1)) == 0);
+    CHECK(scmp(APInt::SMin(64), APInt(0x8000'0000'0000'0000, 64)) == 0);
+    CHECK(scmp(APInt::SMin(80),
+               APInt::parse("8000'0000'0000'0000'0000", 16, 80).value()) == 0);
+
+    CHECK(scmp(APInt::SMax(1), APInt(0, 1)) == 0);
+    CHECK(scmp(APInt::SMax(64), APInt(0x7FFF'FFFF'FFFF'FFFF, 64)) == 0);
+    CHECK(scmp(APInt::SMax(80),
+               APInt::parse("0x7FFF'FFFF'FFFF'FFFF'FFFF", 16, 80).value()) ==
+          0);
+
+    CHECK(scmp(APInt::UMin(1), APInt(0, 1)) == 0);
+    CHECK(scmp(APInt::UMin(64), APInt(0, 64)) == 0);
+    CHECK(scmp(APInt::UMin(80), APInt(0, 80)) == 0);
+
+    CHECK(scmp(APInt::UMax(1), APInt(1, 1)) == 0);
+    CHECK(scmp(APInt::UMax(64), APInt(0xFFFF'FFFF'FFFF'FFFF, 64)) == 0);
+    CHECK(scmp(APInt::UMax(80),
+               APInt::parse("0xFFFF'FFFF'FFFF'FFFF'FFFF", 16, 80).value()) ==
+          0);
 }

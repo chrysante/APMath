@@ -18,9 +18,9 @@ namespace APMath::internal {
 
 using Limb = std::uint64_t;
 
-static constexpr std::size_t limbSize = sizeof(Limb);
-static constexpr std::size_t limbBitSize = limbSize * CHAR_BIT;
-static constexpr Limb limbMax = Limb(-1);
+static constexpr std::size_t LimbSize = sizeof(Limb);
+static constexpr std::size_t LimbBitSize = LimbSize * CHAR_BIT;
+static constexpr Limb LimbMax = Limb(-1);
 
 std::size_t ceilDiv(std::size_t a, std::size_t b);
 std::size_t ceilRem(std::size_t a, std::size_t b);
@@ -132,7 +132,18 @@ public:
     /// Boolean constant with value 1 and bitwidth 1
     static APInt True() { return APInt(1, 1); }
 
-public:
+    /// \Returns the largest unsigned value of width \p bitwidth
+    static APInt UMax(size_t bitwidth);
+
+    /// \Returns the smallest unsigned value of width \p bitwidth
+    static APInt UMin(size_t bitwidth);
+
+    /// \Returns the largest signed value of width \p bitwidth
+    static APInt SMax(size_t bitwidth);
+
+    /// \Returns the smallest signed value of width \p bitwidth
+    static APInt SMin(size_t bitwidth);
+
     /// Construct an `APInt` with 64 bits and value 0
     explicit APInt();
 
@@ -335,8 +346,7 @@ public:
     /// means the result will be exactly as wide as required to represent the
     /// number. If a non-zero bitwidth is specified and the number does not fit,
     /// `std::nullopt` is returned.
-    static std::optional<APInt> parse(std::string_view str,
-                                      int base = 10,
+    static std::optional<APInt> parse(std::string_view str, int base = 10,
                                       size_t bitwidth = 0);
 
     /// Compare integers for equality.
@@ -358,10 +368,10 @@ private:
     bool isLocal() const { return numLimbs() <= 1; }
 
     std::size_t numLimbs() const {
-        return internal::ceilDiv(_bitwidth, internal::limbBitSize);
+        return internal::ceilDiv(_bitwidth, internal::LimbBitSize);
     }
 
-    std::size_t byteSize() const { return numLimbs() * internal::limbSize; }
+    std::size_t byteSize() const { return numLimbs() * internal::LimbSize; }
 
     Limb topLimbMask() const {
         return topLimbActiveBits == 64 ? Limb(-1) :
