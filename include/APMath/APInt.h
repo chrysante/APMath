@@ -14,6 +14,8 @@
 #include <string_view>
 #include <utility>
 
+#include <APMath/API.h>
+
 namespace APMath::internal {
 
 using Limb = std::uint64_t;
@@ -32,97 +34,99 @@ namespace APMath {
 class APInt;
 
 /// Compute sum of \p lhs and \p rhs
-APInt add(APInt lhs, APInt const& rhs);
+APMATH_API APInt add(APInt lhs, APInt const& rhs);
 
 /// Compute difference of \p lhs and \p rhs
-APInt sub(APInt lhs, APInt const& rhs);
+APMATH_API APInt sub(APInt lhs, APInt const& rhs);
 
 /// Compute product of \p lhs and \p rhs
-APInt mul(APInt const& lhs, APInt const& rhs);
+APMATH_API APInt mul(APInt const& lhs, APInt const& rhs);
 
 /// Compute quotient and remainder of \p lhs and \p rhs
 /// Operands are interpreted as unsigned integers.
-std::pair<APInt, APInt> udivrem(APInt const& numerator, APInt const& divisor);
+APMATH_API std::pair<APInt, APInt> udivrem(APInt const& numerator,
+                                           APInt const& divisor);
 
 /// Compute quotient of \p lhs and \p rhs
 /// Operands are interpreted as unsigned integers.
-APInt udiv(APInt const& lhs, APInt const& rhs);
+APMATH_API APInt udiv(APInt const& lhs, APInt const& rhs);
 
 /// Compute remainder of \p lhs and \p rhs
 /// Operands are interpreted as unsigned integers.
-APInt urem(APInt const& lhs, APInt const& rhs);
+APMATH_API APInt urem(APInt const& lhs, APInt const& rhs);
 
 /// Compute quotient and remainder of \p lhs and \p rhs
 /// Operands are interpreted as signed integers. Quotient is truncated towards
 /// 0.
-std::pair<APInt, APInt> sdivrem(APInt const& numerator, APInt const& divisor);
+APMATH_API std::pair<APInt, APInt> sdivrem(APInt const& numerator,
+                                           APInt const& divisor);
 
 /// Compute quotient of \p lhs and \p rhs
 /// Operands are interpreted as signed integers. Result is truncated towards 0.
-APInt sdiv(APInt const& lhs, APInt const& rhs);
+APMATH_API APInt sdiv(APInt const& lhs, APInt const& rhs);
 
 /// Compute remainder of \p lhs and \p rhs
 /// Operands are interpreted as signed integers.
-APInt srem(APInt const& lhs, APInt const& rhs);
+APMATH_API APInt srem(APInt const& lhs, APInt const& rhs);
 
 /// Compute bitwise AND of \p lhs and \p rhs
-APInt btwand(APInt lhs, APInt const& rhs);
+APMATH_API APInt btwand(APInt lhs, APInt const& rhs);
 
 /// Compute bitwise OR of \p lhs and \p rhs
-APInt btwor(APInt lhs, APInt const& rhs);
+APMATH_API APInt btwor(APInt lhs, APInt const& rhs);
 
 /// Compute bitwise XOR of \p lhs and \p rhs
-APInt btwxor(APInt lhs, APInt const& rhs);
+APMATH_API APInt btwxor(APInt lhs, APInt const& rhs);
 
 /// Logical left shift \p operand by \p numBits bits.
-APInt lshl(APInt operand, int numBits);
+APMATH_API APInt lshl(APInt operand, int numBits);
 
 /// Logical right shift \p operand by \p numBits bits.
-APInt lshr(APInt operand, int numBits);
+APMATH_API APInt lshr(APInt operand, int numBits);
 
 /// Arithmetic left shift \p operand by \p numBits bits.
-APInt ashl(APInt operand, int numBits);
+APMATH_API APInt ashl(APInt operand, int numBits);
 
 /// Arithmetic right shift \p operand by \p numBits bits.
-APInt ashr(APInt operand, int numBits);
+APMATH_API APInt ashr(APInt operand, int numBits);
 
 /// Left rotate \p operand by \p numBits bits.
-APInt rotl(APInt operand, int numBits);
+APMATH_API APInt rotl(APInt operand, int numBits);
 
 /// Right rotate \p operand by \p numBits bits.
-APInt rotr(APInt operand, int numBits);
+APMATH_API APInt rotr(APInt operand, int numBits);
 
 /// Compute arithmetic signed complement of \p operand
-APInt negate(APInt operand);
+APMATH_API APInt negate(APInt operand);
 
 /// Compute bitwise comlement of \p operand
-APInt btwnot(APInt operand);
+APMATH_API APInt btwnot(APInt operand);
 
 /// Zero-extend \p operand to \p bitwidth
 /// If \p bitwidth is less than current bitwidth, \p operand will be shrunk.
-APInt zext(APInt operand, std::size_t bitwidth);
+APMATH_API APInt zext(APInt operand, std::size_t bitwidth);
 
 /// Sign-extend \p operand to \p bitwidth
 /// If \p bitwidth is less than current bitwidth, \p operand will be shrunk.
-APInt sext(APInt operand, std::size_t bitwidth);
+APMATH_API APInt sext(APInt operand, std::size_t bitwidth);
 
 /// Perform unsigned comparison between \p lhs and \p rhs
-int ucmp(APInt const& lhs, APInt const& rhs);
+APMATH_API int ucmp(APInt const& lhs, APInt const& rhs);
 
 /// \overload
-int ucmp(APInt const& lhs, std::uint64_t rhs);
+APMATH_API int ucmp(APInt const& lhs, std::uint64_t rhs);
 
 /// \overload
-int ucmp(std::uint64_t lhs, APInt const& rhs);
+APMATH_API int ucmp(std::uint64_t lhs, APInt const& rhs);
 
 /// Perform signed comparison between \p lhs and \p rhs
-int scmp(APInt const& lhs, APInt const& rhs);
+APMATH_API int scmp(APInt const& lhs, APInt const& rhs);
 
 /// Arbitraty width integer.
 /// Bit width is specified on construction and can be modified with `zext()`
 /// and `sext()`. Operations involving multiple integers usually require the
 /// operands to be of same width.
-class APInt {
+class APMATH_API APInt {
 public:
     using Limb = internal::Limb;
 
@@ -346,7 +350,8 @@ public:
     /// means the result will be exactly as wide as required to represent the
     /// number. If a non-zero bitwidth is specified and the number does not fit,
     /// `std::nullopt` is returned.
-    static std::optional<APInt> parse(std::string_view str, int base = 10,
+    static std::optional<APInt> parse(std::string_view str,
+                                      int base = 10,
                                       size_t bitwidth = 0);
 
     /// Compare integers for equality.

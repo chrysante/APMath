@@ -1,8 +1,10 @@
-#include "Catch2.hpp"
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
 
 #include <limits>
 #include <vector>
 
+#include <APMath/API.h>
 #include <APMath/APInt.h>
 
 using namespace APMath;
@@ -132,7 +134,8 @@ TEST_CASE("add - overflow - 1") {
 }
 
 TEST_CASE("add - overflow - 2") {
-    APInt a({ 0xFFFF'FFFF'FFFF'FFFF, 0xFFFF'FFFF'FFFF'FFFF,
+    APInt a({ 0xFFFF'FFFF'FFFF'FFFF,
+              0xFFFF'FFFF'FFFF'FFFF,
               0x7FFF'FFFF'FFFF'FFFF },
             192);
     APInt const b(1, 192);
@@ -173,7 +176,8 @@ TEST_CASE("sub - 3") {
 TEST_CASE("sub - underflow - 1") {
     APInt a(0, 192);
     APInt const b(1, 192);
-    APInt const c({ 0xFFFF'FFFF'FFFF'FFFF, 0xFFFF'FFFF'FFFF'FFFF,
+    APInt const c({ 0xFFFF'FFFF'FFFF'FFFF,
+                    0xFFFF'FFFF'FFFF'FFFF,
                     0xFFFF'FFFF'FFFF'FFFF },
                   192);
     a.sub(b);

@@ -12,6 +12,8 @@
 #include <string_view>
 #include <utility>
 
+#include <APMath/API.h>
+
 namespace APMath {
 
 class APInt;
@@ -23,30 +25,30 @@ template <typename To, typename From>
 To bitcast(From const& from); // Undefined
 
 template <>
-APInt bitcast(APFloat const& from);
+APMATH_API APInt bitcast(APFloat const& from);
 
 template <>
-APFloat bitcast(APInt const& from);
+APMATH_API APFloat bitcast(APInt const& from);
 
 /// Convert \p from to type `To`. \p from is interpreted as `unsigned`
 template <typename To, typename From>
 To valuecast(From const& from, size_t toBitwidth); // Undefined
 
 template <>
-APInt valuecast(APFloat const& from, size_t toBitwidth);
+APMATH_API APInt valuecast(APFloat const& from, size_t toBitwidth);
 
 template <>
-APFloat valuecast(APInt const& from, size_t toBitwidth);
+APMATH_API APFloat valuecast(APInt const& from, size_t toBitwidth);
 
 /// Convert \p from to type `To`. \p from is interpreted as `signed`
 template <typename To, typename From>
 To signedValuecast(From const& from, size_t toBitwidth); // Undefined
 
 template <>
-APInt signedValuecast(APFloat const& from, size_t toBitwidth);
+APMATH_API APInt signedValuecast(APFloat const& from, size_t toBitwidth);
 
 template <>
-APFloat signedValuecast(APInt const& from, size_t toBitwidth);
+APMATH_API APFloat signedValuecast(APInt const& from, size_t toBitwidth);
 
 } // namespace APMath
 

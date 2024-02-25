@@ -323,8 +323,8 @@ APInt& APInt::add(APInt const& rhs) {
     Limb* l = limbPtr();
     Limb const* r = rhs.limbPtr();
     for (size_t i = 0; i < numLimbs(); ++i) {
-        Limb const newCarry = l[i] > LimbMax - r[i] ||
-                              l[i] > LimbMax - (r[i] + carry);
+        Limb const newCarry =
+            l[i] > LimbMax - r[i] || l[i] > LimbMax - (r[i] + carry);
         l[i] += r[i] + carry;
         carry = newCarry;
     }
@@ -671,8 +671,10 @@ int APInt::scmp(APInt const& rhs) const {
 
 bool APInt::negative() const { return highbit() != 0; }
 
-static int ucmpImpl(APInt::Limb const* lhs, size_t lhsNumLimbs,
-                    APInt::Limb const* rhs, size_t rhsNumLimbs) {
+static int ucmpImpl(APInt::Limb const* lhs,
+                    size_t lhsNumLimbs,
+                    APInt::Limb const* rhs,
+                    size_t rhsNumLimbs) {
     if (lhsNumLimbs != rhsNumLimbs) {
         /// If one is bigger than the other, we need to test the top limbs
         /// separately.
@@ -802,7 +804,8 @@ static int extractSign(std::string_view s, int base) {
     return 0;
 }
 
-std::optional<APInt> APInt::parse(std::string_view s, int base,
+std::optional<APInt> APInt::parse(std::string_view s,
+                                  int base,
                                   size_t targetBW) {
     assert(base >= 2);
     assert(base <= 36);

@@ -12,12 +12,14 @@
 #include <string_view>
 #include <utility>
 
+#include <APMath/API.h>
+
 namespace APMath {
 
 class APFloat;
 
 /// APFloat precision structure.
-struct APFloatPrec {
+struct APMATH_API APFloatPrec {
     /// Static constructor
     /// \Returns the instance that represents single precision
     static APFloatPrec Single();
@@ -43,81 +45,81 @@ struct APFloatPrec {
 /// ## Basic operations
 
 /// Compute sum of \p lhs and \p rhs
-APFloat add(APFloat lhs, APFloat const& rhs);
+APMATH_API APFloat add(APFloat lhs, APFloat const& rhs);
 
 /// Compute difference of \p lhs and \p rhs
-APFloat sub(APFloat lhs, APFloat const& rhs);
+APMATH_API APFloat sub(APFloat lhs, APFloat const& rhs);
 
 /// Compute product of \p lhs and \p rhs
-APFloat mul(APFloat const& lhs, APFloat const& rhs);
+APMATH_API APFloat mul(APFloat const& lhs, APFloat const& rhs);
 
 /// Compute quotient of \p lhs and \p rhs
-APFloat div(APFloat const& lhs, APFloat const& rhs);
+APMATH_API APFloat div(APFloat const& lhs, APFloat const& rhs);
 
 /// Flip sign of \p operand
-APFloat negate(APFloat operand);
+APMATH_API APFloat negate(APFloat operand);
 
 /// Set precision of \p operand to \p precision
-APFloat precisionCast(APFloat operand, APFloatPrec precision);
+APMATH_API APFloat precisionCast(APFloat operand, APFloatPrec precision);
 
 /// Compare \p lhs and \p rhs
-int cmp(APFloat const& lhs, APFloat const& rhs);
+APMATH_API int cmp(APFloat const& lhs, APFloat const& rhs);
 
 /// Compare \p lhs and \p rhs
-int cmp(APFloat const& lhs, double rhs);
+APMATH_API int cmp(APFloat const& lhs, double rhs);
 
 /// ## Common math functions
 
 /// Compute absolute value of \p arg
-APFloat abs(APFloat const& arg);
+APMATH_API APFloat abs(APFloat const& arg);
 
 /// Compute _e_ raised to the power of \p arg
-APFloat exp(APFloat const& arg);
+APMATH_API APFloat exp(APFloat const& arg);
 
 /// Compute 2 raised to the power of \p arg
-APFloat exp2(APFloat const& arg);
+APMATH_API APFloat exp2(APFloat const& arg);
 
 /// Compute 10 raised to the power of \p arg
-APFloat exp10(APFloat const& arg);
+APMATH_API APFloat exp10(APFloat const& arg);
 
 /// Compute the natural logarithm of \p arg
-APFloat log(APFloat const& arg);
+APMATH_API APFloat log(APFloat const& arg);
 
 /// Compute the logarithm base 2 of \p arg
-APFloat log2(APFloat const& arg);
+APMATH_API APFloat log2(APFloat const& arg);
 
 /// Compute the logarithm base 10 of \p arg
-APFloat log10(APFloat const& arg);
+APMATH_API APFloat log10(APFloat const& arg);
 
 /// Compute \p base raised to the power of \p exp
-APFloat pow(APFloat const& base, APFloat const& exp);
+APMATH_API APFloat pow(APFloat const& base, APFloat const& exp);
 
 /// Compute square root of \p arg
-APFloat sqrt(APFloat const& arg);
+APMATH_API APFloat sqrt(APFloat const& arg);
 
 /// Compute cube root of \p arg
-APFloat cbrt(APFloat const& arg);
+APMATH_API APFloat cbrt(APFloat const& arg);
 
 /// Compute `hypot` of arguments
-APFloat hypot(APFloat const& a, APFloat const& b);
+APMATH_API APFloat hypot(APFloat const& a, APFloat const& b);
 
 /// Compute sine of \p arg
-APFloat sin(APFloat const& arg);
+APMATH_API APFloat sin(APFloat const& arg);
 
 /// Compute cosine of \p arg
-APFloat cos(APFloat const& arg);
+APMATH_API APFloat cos(APFloat const& arg);
 
 /// Compute tangent of \p arg
-APFloat tan(APFloat const& arg);
+APMATH_API APFloat tan(APFloat const& arg);
 
 /// Compute arc sine of \p arg
-APFloat asin(APFloat const& arg);
+APMATH_API APFloat asin(APFloat const& arg);
 
 /// Compute arc cosine of \p arg
-APFloat acos(APFloat const& arg);
+APMATH_API APFloat acos(APFloat const& arg);
 
 /// Compute arc tangent of \p arg
-APFloat atan(APFloat const& arg);
+APMATH_API APFloat atan(APFloat const& arg);
 
 /// ## class APFloat
 
@@ -128,7 +130,7 @@ APFloat atan(APFloat const& arg);
 /// implemented in terms of hardware float operations on `float` or `double`
 /// type. This is temporary until we take the time to implement proper IEEE
 /// emulation. Until then only single and double precision are supported.
-class APFloat {
+class APMATH_API APFloat {
     using Limb = std::uint64_t;
 
 public:
